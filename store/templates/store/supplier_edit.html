@@ -1,0 +1,58 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Edit Supplier - MediPOS{% endblock %}
+{% block breadcrumb %}Edit Supplier{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Supply chain</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">Edit: {{ supplier.name }}</h1>
+    </div>
+    <a class="secondary-action small" href="{% url 'suppliers' %}">
+        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Suppliers
+    </a>
+</section>
+
+<section class="panel" style="max-width: 600px; margin: 0 auto; padding: 32px;">
+    <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="edit" style="color: var(--primary);"></i>
+            <h2>Supplier Details</h2>
+        </div>
+    </div>
+    
+    <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
+        {% csrf_token %}
+        <div>
+            <label>Supplier Name</label>
+            {{ form.name }}
+        </div>
+        <div>
+            <label>Contact Person</label>
+            {{ form.contact_person }}
+        </div>
+        <div>
+            <label>Phone Number</label>
+            {{ form.phone }}
+        </div>
+        <div>
+            <label>Address</label>
+            {{ form.address }}
+        </div>
+        <div>
+            <label>Outstanding Balance (PKR)</label>
+            {{ form.balance }}
+        </div>
+        {% if form.errors %}
+            <div class="message error">
+                <i data-lucide="alert-triangle"></i>
+                <span>Please check supplier details.</span>
+            </div>
+        {% endif %}
+        <button class="primary-action" type="submit" style="font-weight: 600; width: 100%; margin-top: 8px;">
+            <i data-lucide="check" style="width: 16px; height: 16px;"></i> Update Supplier
+        </button>
+    </form>
+</section>
+{% endblock %}

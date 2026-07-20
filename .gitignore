@@ -1,0 +1,11 @@
+.venv/
+db.sqlite3
+__pycache__/
+*.py[cod]
+*.sqlite3
+staticfiles/
+.chrome-verification-profile*/
+*.log
+*.out
+*.err
+start-test.txt

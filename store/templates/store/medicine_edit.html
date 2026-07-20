@@ -1,0 +1,100 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Edit Medicine - MediPOS{% endblock %}
+{% block breadcrumb %}Edit Medicine{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Inventory</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">Edit: {{ medicine.name }}</h1>
+    </div>
+    <a class="secondary-action small" href="{% url 'medicines' %}">
+        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Inventory
+    </a>
+</section>
+
+<section class="panel" style="max-width: 600px; margin: 0 auto; padding: 32px;">
+    <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="edit" style="color: var(--primary);"></i>
+            <h2>Medicine Details</h2>
+        </div>
+    </div>
+    
+    <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
+        {% csrf_token %}
+        <div>
+            <label>Name</label>
+            {{ form.name }}
+        </div>
+        <div>
+            <label>Generic Name</label>
+            {{ form.generic_name }}
+        </div>
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div>
+                <label>Category</label>
+                {{ form.category }}
+            </div>
+            <div>
+                <label>Barcode</label>
+                {{ form.barcode }}
+            </div>
+        </div>
+        <div>
+            <label>Manufacturer</label>
+            {{ form.manufacturer }}
+        </div>
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div>
+                <label>Batch Number</label>
+                {{ form.batch_number }}
+            </div>
+            <div>
+                <label>Expiry Date</label>
+                {{ form.expiry_date }}
+            </div>
+        </div>
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div>
+                <label>Purchase Price</label>
+                {{ form.purchase_price }}
+            </div>
+            <div>
+                <label>Sale Price</label>
+                {{ form.sale_price }}
+            </div>
+        </div>
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div>
+                <label>Stock Quantity</label>
+                {{ form.stock_quantity }}
+            </div>
+            <div>
+                <label>Low-Stock Level</label>
+                {{ form.reorder_level }}
+            </div>
+        </div>
+        <div>
+            <label>Supplier</label>
+            {{ form.supplier }}
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+            {{ form.is_active }}
+            <label style="margin: 0; font-weight: 500;">Active for counter sale</label>
+        </div>
+        
+        {% if form.errors %}
+            <div class="message error">
+                <i data-lucide="alert-triangle"></i>
+                <span>Please fix highlighted medicine details.</span>
+            </div>
+        {% endif %}
+        
+        <button class="primary-action" type="submit" style="font-weight: 600; width: 100%; margin-top: 8px;">
+            <i data-lucide="check" style="width: 16px; height: 16px;"></i> Update Medicine
+        </button>
+    </form>
+</section>
+{% endblock %}

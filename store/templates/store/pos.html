@@ -1,0 +1,239 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}New Sale - MediPOS{% endblock %}
+{% block breadcrumb %}New Sale{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Lock the main container viewport for POS cashier experience */
+    .content-container {
+        overflow: hidden !important;
+        height: calc(100vh - 60px) !important;
+        padding: 20px !important;
+    }
+
+    .pos-layout {
+        height: 100% !important;
+    }
+
+    /* Style for the custom checkout scrollable panel */
+    .bill-scroll-content {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding-right: 4px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+    }
+
+    .bill-scroll-content::-webkit-scrollbar {
+        width: 5px;
+    }
+    .bill-scroll-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .bill-scroll-content::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 9999px;
+    }
+    .bill-scroll-content::-webkit-scrollbar-thumb:hover {
+        background: var(--muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-head compact">
+    <div>
+        <p class="eyebrow">Counter billing</p>
+        <h1 style="font-size: 1.75rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="shopping-cart" style="color: var(--primary);"></i> Counter Checkout
+        </h1>
+    </div>
+    <form method="post" class="inline-action">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="clear">
+        <button class="secondary-action small danger" type="submit" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2); min-height: 32px;">
+            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Clear Bill
+        </button>
+    </form>
+</section>
+
+<section class="pos-layout">
+    <!-- Left Panel: Medicine Search & Catalog -->
+    <div class="panel pos-search-panel" style="gap: 16px;">
+        <form method="get" class="search-form">
+            <label for="medicine-search" style="font-weight: 600;">Search Medicine (by Name, Generic, Barcode, or Batch)</label>
+            <div class="search-row">
+                <div style="position: relative; flex: 1;">
+                    <i data-lucide="search" style="position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; color: var(--muted);"></i>
+                    <input id="medicine-search" name="q" value="{{ query }}" placeholder="Search by name, generic name, barcode, batch..." autocomplete="off" style="padding-left: 36px;">
+                </div>
+                <button class="primary-action" type="submit">
+                    Search
+                </button>
+            </div>
+        </form>
+
+        <div class="medicine-results">
+            {% for medicine in medicines %}
+                <article class="medicine-row">
+                    <div style="flex: 1;">
+                        <h2 style="font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="pill" style="width: 16px; height: 16px; color: var(--muted); margin-top: 1px;"></i>
+                            {{ medicine.name }}
+                        </h2>
+                        <p style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;">
+                            {{ medicine.generic_name|default:'No generic name' }} 
+                            {% if medicine.batch_number %} • <span style="font-family: monospace;">Batch {{ medicine.batch_number }}</span>{% endif %}
+                        </p>
+                        <div class="meta-line">
+                            <span style="display: flex; align-items: center; gap: 4px;">
+                                <i data-lucide="package" style="width: 12px; height: 12px;"></i> Stock: <strong>{{ medicine.stock_quantity }}</strong>
+                            </span>
+                            <span style="display: flex; align-items: center; gap: 4px; color: var(--ink); font-weight: 600;">
+                                PKR {{ medicine.sale_price|floatformat:0 }}
+                            </span>
+                            <span class="{% if medicine.is_available_for_sale %}status-good{% else %}status-bad{% endif %}" style="padding: 1px 6px; font-size: 0.725rem;">
+                                {{ medicine.stock_label }}
+                            </span>
+                        </div>
+                    </div>
+                    <form method="post" class="add-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add">
+                        <input type="hidden" name="medicine_id" value="{{ medicine.id }}">
+                        <input type="hidden" name="next_query" value="{{ query }}">
+                        <input type="number" name="quantity" value="1" min="1" max="{{ medicine.stock_quantity }}" aria-label="Quantity for {{ medicine.name }}">
+                        <button class="primary-action small" type="submit" {% if not medicine.is_available_for_sale %}disabled{% endif %}>
+                            Add
+                        </button>
+                    </form>
+                </article>
+            {% empty %}
+                <div class="empty-state">
+                    <i data-lucide="package-search" style="width: 48px; height: 48px; color: var(--muted);"></i>
+                    <h2>No medicines found</h2>
+                    <p style="color: var(--muted); font-size: 0.85rem;">Add new medicine stock under the Inventory panel, then return to Counter.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Panel: Checkout Receipt & Shopping Cart -->
+    <aside class="panel bill-panel" style="gap: 16px; overflow: hidden; height: 100%;">
+        <!-- Header (fixed) -->
+        <div class="panel-head" style="border-bottom: 2px dashed var(--border); padding-bottom: 12px; margin-bottom: 4px; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="receipt" style="color: var(--primary);"></i>
+                <h2 style="font-size: 1.15rem; font-weight: 700;">Current Bill</h2>
+            </div>
+            <strong style="font-size: 1.25rem; font-family: 'Outfit'; color: var(--primary);">PKR {{ subtotal|floatformat:0 }}</strong>
+        </div>
+
+        <form method="post" class="checkout-form" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; border-top: none; padding-top: 0; margin-top: 0;">
+            {% csrf_token %}
+            <!-- Hidden inputs to manage actions cleanly without nested forms -->
+            <input type="hidden" name="action" id="pos-form-action" value="checkout">
+            <input type="hidden" name="medicine_id" id="pos-form-med-id" value="">
+            <input type="hidden" name="quantity" id="pos-form-qty" value="">
+
+            <!-- Scrollable content area inside the form -->
+            <div class="bill-scroll-content">
+                
+                <!-- Bill lines (cart items list) -->
+                <div class="bill-lines" style="flex: none; overflow: visible;">
+                    {% for line in cart_lines %}
+                        <div class="bill-line">
+                            <div>
+                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                    <strong style="font-weight: 600;">{{ line.medicine.name }}</strong>
+                                    <span>PKR {{ line.medicine.sale_price|floatformat:0 }} each</span>
+                                </div>
+                                <div class="line-total">
+                                    <span style="font-weight: 700; color: var(--ink);">PKR {{ line.line_total|floatformat:0 }}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div class="quantity-controls">
+                                    <button type="button" aria-label="Decrease quantity" style="display: grid; place-items: center;" onclick="submitQtyChange('{{ line.medicine.id }}', '{{ line.quantity|add:'-1' }}')">
+                                        <i data-lucide="minus" style="width: 10px; height: 10px;"></i>
+                                    </button>
+                                    <input name="dummy_quantity" value="{{ line.quantity }}" min="0" max="{{ line.medicine.stock_quantity }}" aria-label="Current quantity" readonly>
+                                    <button type="button" aria-label="Increase quantity" style="display: grid; place-items: center;" onclick="submitQtyChange('{{ line.medicine.id }}', '{{ line.quantity|add:'1' }}')">
+                                        <i data-lucide="plus" style="width: 10px; height: 10px;"></i>
+                                    </button>
+                                </div>
+                                
+                                <button type="button" class="link-button danger" style="display: flex; align-items: center; gap: 4px;" onclick="submitRemoveItem('{{ line.medicine.id }}')">
+                                    <i data-lucide="x" style="width: 12px; height: 12px;"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state compact-empty">
+                            <i data-lucide="shopping-bag" style="width: 36px; height: 36px; color: var(--muted); margin-bottom: 4px;"></i>
+                            <h2 style="font-size: 0.95rem;">No items in cart</h2>
+                            <p style="color: var(--muted); font-size: 0.8rem;">Search and add products to start counter billing.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Form fields (Customer, Phone, Payment, Discount, Cash) -->
+                <div class="form-grid single" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    <div style="grid-column: span 2;">
+                        <label>Customer Name</label>
+                        {{ checkout_form.customer_name }}
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label>Customer Phone</label>
+                        {{ checkout_form.customer_phone }}
+                    </div>
+                    <div>
+                        <label>Payment Method</label>
+                        {{ checkout_form.payment_method }}
+                    </div>
+                    <div>
+                        <label>Discount (PKR)</label>
+                        {{ checkout_form.discount }}
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label>Cash Paid (PKR)</label>
+                        {{ checkout_form.amount_paid }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button (sticky at bottom) -->
+            <div style="padding-top: 16px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; width: 100%;">
+                <button class="primary-action full-width" type="submit" {% if not cart_lines %}disabled{% endif %} style="width: 100%; border-radius: var(--radius-md); font-weight: 600;">
+                    <i data-lucide="check" style="width: 18px; height: 18px;"></i> Complete Counter Sale
+                </button>
+            </div>
+        </form>
+    </aside>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'store/js/pos.js' %}"></script>
+<script>
+    function submitQtyChange(medId, qty) {
+        document.getElementById('pos-form-action').value = 'update';
+        document.getElementById('pos-form-med-id').value = medId;
+        document.getElementById('pos-form-qty').value = qty;
+        document.querySelector('.checkout-form').submit();
+    }
+
+    // Overwrite default JS form mapping if needed
+    function submitRemoveItem(medId) {
+        document.getElementById('pos-form-action').value = 'remove';
+        document.getElementById('pos-form-med-id').value = medId;
+        document.querySelector('.checkout-form').submit();
+    }
+</script>
+{% endblock %}

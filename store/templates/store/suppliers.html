@@ -1,0 +1,91 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Suppliers - MediPOS{% endblock %}
+{% block breadcrumb %}Suppliers{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Supply chain</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">Suppliers</h1>
+    </div>
+</section>
+
+<section class="two-column" style="grid-template-columns: 2fr 1fr; align-items: start;">
+    <!-- Suppliers List -->
+    <div class="panel">
+        <div class="panel-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="users" style="color: var(--primary);"></i>
+                <h2>Supplier List</h2>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Supplier Name</th><th>Contact Person</th><th>Phone</th><th>Outstanding Balance</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    {% for supplier in suppliers %}
+                        <tr>
+                            <td style="font-weight: 600; color: var(--ink);">{{ supplier.name }}</td>
+                            <td>{{ supplier.contact_person|default:'-' }}</td>
+                            <td>{{ supplier.phone|default:'-' }}</td>
+                            <td><strong>PKR {{ supplier.balance|floatformat:0 }}</strong></td>
+                            <td>
+                                <a class="secondary-action small" href="{% url 'supplier_edit' supplier.id %}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px;">
+                                    <i data-lucide="edit" style="width: 12px; height: 12px;"></i> Edit
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" style="text-align: center; color: var(--muted);">No suppliers saved yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Supplier Panel -->
+    <aside class="panel">
+        <div class="panel-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="plus-circle" style="color: var(--primary);"></i>
+                <h2>Add Supplier</h2>
+            </div>
+        </div>
+        <form method="post" style="display: flex; flex-direction: column; gap: 14px;">
+            {% csrf_token %}
+            <div>
+                <label>Supplier Name</label>
+                {{ form.name }}
+            </div>
+            <div>
+                <label>Contact Person</label>
+                {{ form.contact_person }}
+            </div>
+            <div>
+                <label>Phone Number</label>
+                {{ form.phone }}
+            </div>
+            <div>
+                <label>Address</label>
+                {{ form.address }}
+            </div>
+            <div>
+                <label>Opening Balance (PKR)</label>
+                {{ form.balance }}
+            </div>
+            {% if form.errors %}
+                <div class="message error">
+                    <i data-lucide="alert-triangle"></i>
+                    <span>Please check supplier details.</span>
+                </div>
+            {% endif %}
+            <button class="primary-action full-width" type="submit" style="font-weight: 600; width: 100%;">
+                <i data-lucide="check" style="width: 16px; height: 16px;"></i> Save Supplier
+            </button>
+        </form>
+    </aside>
+</section>
+{% endblock %}

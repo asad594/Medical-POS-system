@@ -1,0 +1,180 @@
+{% extends 'store/public_base.html' %}
+{% load static %}
+
+{% block title %}MediPOS Karachi - Medical Store POS{% endblock %}
+
+{% block content %}
+<main>
+    <section class="hero" style="background-image: linear-gradient(90deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.4)), url('{% static 'store/img/pharmacy-pos-hero.png' %}');">
+        <div class="hero-content">
+            <p class="eyebrow" style="color: var(--primary); font-weight: 700;">Built for medical stores in Karachi</p>
+            <h1 style="color: #ffffff; text-shadow: 0 4px 12px rgba(0,0,0,0.3);">MediPOS Karachi</h1>
+            <p class="hero-copy">
+                A premium, offline-first pharmacy POS system for billing medicines, checking real-time stock availability, tracking batch expiries, and monitoring daily revenue reports.
+            </p>
+            <div class="hero-actions">
+                <a class="primary-action" href="#demo" style="border-radius: var(--radius-md);">
+                    <i data-lucide="play" style="width: 16px; height: 16px;"></i> Start Free Demo
+                </a>
+                <a class="secondary-action" href="#pricing" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #ffffff;">
+                    View Pricing
+                </a>
+            </div>
+            <div class="hero-points" aria-label="Key product benefits">
+                <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="check" style="color: var(--success); width: 16px; height: 16px;"></i> Medicine search</span>
+                <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="check" style="color: var(--success); width: 16px; height: 16px;"></i> Stock control</span>
+                <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="check" style="color: var(--success); width: 16px; height: 16px;"></i> PKR billing</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="market-strip">
+        <div>
+            <strong>Initial target</strong>
+            <span style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="map-pin" style="color: var(--primary); width: 18px; height: 18px;"></i> Karachi Medical Stores
+            </span>
+        </div>
+        <div>
+            <strong>Long-term market</strong>
+            <span style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="globe" style="color: var(--primary); width: 18px; height: 18px;"></i> Worldwide Pharmacies
+            </span>
+        </div>
+        <div>
+            <strong>Target Buyer</strong>
+            <span style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="briefcase" style="color: var(--primary); width: 18px; height: 18px;"></i> Independent Store Owners
+            </span>
+        </div>
+    </section>
+
+    <section class="landing-section" id="features">
+        <div class="section-heading">
+            <p class="eyebrow">Daily work made simple</p>
+            <h2>Everything a medical store needs at the counter</h2>
+        </div>
+        <div class="feature-grid">
+            <article class="feature-card">
+                <i data-lucide="search" style="color: var(--primary); width: 32px; height: 32px;"></i>
+                <h3>Fast medicine search</h3>
+                <p>Find medicine by name, generic formulation, barcode, batch, or company and instantly see stock statuses.</p>
+            </article>
+            <article class="feature-card">
+                <i data-lucide="calculator" style="color: var(--primary); width: 32px; height: 32px;"></i>
+                <h3>Quantity-based billing</h3>
+                <p>Add items to cart, adjust quantities, calculate discounts, and prevent sales if stock is insufficient.</p>
+            </article>
+            <article class="feature-card">
+                <i data-lucide="alert-octagon" style="color: var(--primary); width: 32px; height: 32px;"></i>
+                <h3>Expiry alerts</h3>
+                <p>Visual safety checks warn you about expired or near-expiry batches before completing a sale.</p>
+            </article>
+            <article class="feature-card">
+                <i data-lucide="truck" style="color: var(--primary); width: 32px; height: 32px;"></i>
+                <h3>Stock purchase entry</h3>
+                <p>Log wholesale stock purchases from suppliers and automatically adjust unit costs and quantities.</p>
+            </article>
+            <article class="feature-card">
+                <i data-lucide="trending-up" style="color: var(--primary); width: 32px; height: 32px;"></i>
+                <h3>Simple reports</h3>
+                <p>Track invoices, gross/net revenue, item sale counts, and margins without touching spreadsheets.</p>
+            </article>
+            <article class="feature-card">
+                <i data-lucide="shield-check" style="color: var(--primary); width: 32px; height: 32px;"></i>
+                <h3>Admin and staff login</h3>
+                <p>A secure portal ensures only registered pharmacists and billing staff can view records and manage inventory.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="landing-section muted-band" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+        <div class="section-heading">
+            <p class="eyebrow">Counter workflow</p>
+            <h2>Search, add, bill, and update stock automatically</h2>
+        </div>
+        <div class="workflow" style="display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; text-align: center; font-weight: 500;">
+            <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: grid; place-items: center; font-size: 1.1rem; font-weight: 700;">1</span>
+                Customer Request
+            </div>
+            <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: grid; place-items: center; font-size: 1.1rem; font-weight: 700;">2</span>
+                Search Availability
+            </div>
+            <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: grid; place-items: center; font-size: 1.1rem; font-weight: 700;">3</span>
+                Add to Cart
+            </div>
+            <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: grid; place-items: center; font-size: 1.1rem; font-weight: 700;">4</span>
+                Complete Bill (PKR)
+            </div>
+            <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                <span style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: grid; place-items: center; font-size: 1.1rem; font-weight: 700;">5</span>
+                Instant Stock Reduction
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-section" id="pricing">
+        <div class="section-heading">
+            <p class="eyebrow">Pricing in rupees</p>
+            <h2>Plans for Karachi medical stores</h2>
+        </div>
+        <div class="pricing-grid">
+            <article class="pricing-card">
+                <h3>Starter</h3>
+                <p class="price" style="font-family: 'Outfit';">PKR 4,999<span style="font-size: 0.9rem; font-weight: normal; color: var(--muted);"> /mo</span></p>
+                <p style="margin-bottom: 20px;">Small store POS with billing, medicine stock, and expiry alerts.</p>
+            </article>
+            <article class="pricing-card featured-plan">
+                <h3>Growth</h3>
+                <p class="price" style="font-family: 'Outfit'; color: var(--primary);">PKR 8,999<span style="font-size: 0.9rem; font-weight: normal; color: var(--muted);"> /mo</span></p>
+                <p style="margin-bottom: 20px;">Supplier purchases, staff usage, sales reports, and daily stock control.</p>
+            </article>
+            <article class="pricing-card">
+                <h3>Pro</h3>
+                <p class="price" style="font-family: 'Outfit';">PKR 14,999<span style="font-size: 0.9rem; font-weight: normal; color: var(--muted);"> /mo</span></p>
+                <p style="margin-bottom: 20px;">Multi-branch reporting, advanced permissions, and priority setup support.</p>
+            </article>
+        </div>
+        <p class="setup-note" style="font-weight: 500;">One-time setup and training: <span style="color: var(--primary);">PKR 20,000</span></p>
+    </section>
+
+    <section class="landing-section contact-band" id="demo" style="background: radial-gradient(circle at 0% 100%, rgba(37,99,235,0.03) 0%, transparent 40%);">
+        <div class="section-heading">
+            <p class="eyebrow">Book a demo</p>
+            <h2>Request a walkthrough for your medical store</h2>
+        </div>
+        <form class="demo-form" method="post">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div>
+                    <label>Store name</label>
+                    {{ form.store_name }}
+                </div>
+                <div>
+                    <label>Owner name</label>
+                    {{ form.owner_name }}
+                </div>
+                <div>
+                    <label>Phone</label>
+                    {{ form.phone }}
+                </div>
+                <div>
+                    <label>Area in Karachi</label>
+                    {{ form.area }}
+                </div>
+            </div>
+            <div style="margin-top: 12px;">
+                <label>Message</label>
+                {{ form.message }}
+            </div>
+            <button class="primary-action" type="submit" style="width: 100%; margin-top: 16px;">
+                <i data-lucide="send" style="width: 16px; height: 16px;"></i> Send Demo Request
+            </button>
+        </form>
+    </section>
+</main>
+{% endblock %}

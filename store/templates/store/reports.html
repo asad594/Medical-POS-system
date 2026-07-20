@@ -1,0 +1,103 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Reports - MediPOS{% endblock %}
+{% block breadcrumb %}Reports{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Sales reporting</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">Reports</h1>
+    </div>
+    <form method="get" class="search-form" style="display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;">
+        <div>
+            <label style="font-size: 0.775rem; margin-bottom: 4px;">From Date</label>
+            <input type="date" name="start" value="{{ start }}" style="min-height: 36px; padding: 6px 10px; font-size: 0.85rem;">
+        </div>
+        <div>
+            <label style="font-size: 0.775rem; margin-bottom: 4px;">To Date</label>
+            <input type="date" name="end" value="{{ end }}" style="min-height: 36px; padding: 6px 10px; font-size: 0.85rem;">
+        </div>
+        <button class="secondary-action small" type="submit" style="min-height: 36px; display: inline-flex; align-items: center; gap: 4px;">
+            <i data-lucide="filter" style="width: 14px; height: 14px;"></i> Apply Filter
+        </button>
+    </form>
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Total Invoices</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--primary-light); color: var(--primary);">
+                <i data-lucide="receipt" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <strong>{{ invoice_count }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Items Sold</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--primary-light); color: var(--primary);">
+                <i data-lucide="shopping-bag" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <strong>{{ items_sold }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Gross Sales</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--success-light); color: var(--success);">
+                <span style="font-weight: bold; font-size: 0.9rem;">PKR</span>
+            </div>
+        </div>
+        <strong>PKR {{ revenue|floatformat:0 }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Net Revenue</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--success-light); color: var(--success);">
+                <span style="font-weight: bold; font-size: 0.9rem;">PKR</span>
+            </div>
+        </div>
+        <strong style="color: var(--success);">PKR {{ net_revenue|floatformat:0 }}</strong>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="list" style="color: var(--primary);"></i>
+            <h2>Invoices Log</h2>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Invoice Number</th><th>Date/Time</th><th>Customer</th><th>Payment Method</th><th>Payable Total</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                    <tr>
+                        <td style="font-weight: 600; font-family: monospace; color: var(--primary);">{{ sale.invoice_number }}</td>
+                        <td>{{ sale.created_at|date:'d M Y, h:i A' }}</td>
+                        <td style="font-weight: 500;">{{ sale.customer_name|default:'Walk-in customer' }}</td>
+                        <td>
+                            <span class="status-good" style="background: var(--primary-light); color: var(--primary);">
+                                {{ sale.get_payment_method_display }}
+                            </span>
+                        </td>
+                        <td><strong>PKR {{ sale.payable_total|floatformat:0 }}</strong></td>
+                        <td>
+                            <a class="secondary-action small" href="{% url 'receipt' sale.id %}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px;">
+                                <i data-lucide="eye" style="width: 12px; height: 12px;"></i> View Receipt
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" style="text-align: center; color: var(--muted);">No invoices found in this date range.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

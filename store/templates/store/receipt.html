@@ -1,0 +1,140 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Receipt {{ sale.invoice_number }} - MediPOS{% endblock %}
+{% block breadcrumb %}Receipt Details{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        body {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .sidebar, .main-header, .no-print, #sidebar-toggle {
+            display: none !important;
+        }
+        .app-main {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .content-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+        }
+        .receipt-layout {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
+            max-width: 100% !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-head no-print">
+    <div>
+        <p class="eyebrow">Invoice</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">{{ sale.invoice_number }}</h1>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <button class="secondary-action small" onclick="window.print()" type="button" style="display: inline-flex; align-items: center; gap: 4px; min-height: 36px;">
+            <i data-lucide="printer" style="width: 16px; height: 16px;"></i> Print Invoice
+        </button>
+        <a class="primary-action small" href="{% url 'pos' %}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 36px;">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i> New Sale
+        </a>
+    </div>
+</section>
+
+<section class="receipt-layout">
+    <div class="receipt-header">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
+            <span class="brand-mark" style="width: 28px; height: 28px; border-radius: var(--radius-sm); background: var(--primary); color: #ffffff; display: grid; place-items: center; font-weight: 800; font-size: 0.9rem;">M</span>
+            <h2 style="font-size: 1.5rem; font-weight: 800;">MediPOS Karachi</h2>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--muted); font-weight: 500;">Karachi, Pakistan • Pharmacy Invoice Receipt</p>
+    </div>
+
+    <div class="receipt-info">
+        <div>
+            <span style="color: var(--muted); font-size: 0.8rem; display: block; margin-bottom: 2px;">Invoice Number</span>
+            <strong style="font-family: monospace; color: var(--primary); font-size: 1rem;">{{ sale.invoice_number }}</strong>
+        </div>
+        <div style="text-align: right;">
+            <span style="color: var(--muted); font-size: 0.8rem; display: block; margin-bottom: 2px;">Date / Time</span>
+            <strong style="color: var(--ink);">{{ sale.created_at|date:'d M Y, h:i A' }}</strong>
+        </div>
+        <div style="margin-top: 8px;">
+            <span style="color: var(--muted); font-size: 0.8rem; display: block; margin-bottom: 2px;">Customer Details</span>
+            <strong style="color: var(--ink);">{{ sale.customer_name|default:'Walk-in Customer' }}</strong>
+            {% if sale.customer_phone %}
+                <span style="font-size: 0.8rem; color: var(--muted); display: block;">{{ sale.customer_phone }}</span>
+            {% endif %}
+        </div>
+        <div style="text-align: right; margin-top: 8px;">
+            <span style="color: var(--muted); font-size: 0.8rem; display: block; margin-bottom: 2px;">Payment Method</span>
+            <strong class="status-good" style="background: var(--primary-light); color: var(--primary); padding: 1px 8px; font-size: 0.725rem;">
+                {{ sale.get_payment_method_display }}
+            </strong>
+        </div>
+    </div>
+
+    <div class="table-wrap" style="border: none;">
+        <table style="font-size: 0.85rem;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border);">
+                    <th style="background: transparent; padding: 8px 4px;">Medicine</th>
+                    <th style="background: transparent; padding: 8px 4px; text-align: center;">Batch</th>
+                    <th style="background: transparent; padding: 8px 4px; text-align: center;">Qty</th>
+                    <th style="background: transparent; padding: 8px 4px; text-align: right;">Rate</th>
+                    <th style="background: transparent; padding: 8px 4px; text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sale.items.all %}
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 12px 4px; font-weight: 500;">{{ item.medicine_name }}</td>
+                        <td style="padding: 12px 4px; text-align: center; font-family: monospace;">{{ item.batch_number|default:'-' }}</td>
+                        <td style="padding: 12px 4px; text-align: center;">{{ item.quantity }}</td>
+                        <td style="padding: 12px 4px; text-align: right;">PKR {{ item.unit_price|floatformat:0 }}</td>
+                        <td style="padding: 12px 4px; text-align: right; font-weight: 600;">PKR {{ item.line_total|floatformat:0 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="receipt-summary">
+        <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 4px; color: var(--muted);">
+            <span>Subtotal</span>
+            <span>PKR {{ sale.subtotal|floatformat:0 }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 6px; color: var(--danger);">
+            <span>Discount Applied</span>
+            <span>- PKR {{ sale.discount|floatformat:0 }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 700; border-top: 2px dashed var(--border); padding-top: 12px; margin-bottom: 6px; color: var(--ink);">
+            <span>Grand Total</span>
+            <span style="color: var(--primary);">PKR {{ sale.payable_total|floatformat:0 }}</span>
+        </div>
+        {% if sale.payment_method == 'cash' %}
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-top: 8px; color: var(--muted);">
+                <span>Cash Received</span>
+                <span>PKR {{ sale.amount_paid|floatformat:0 }}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; color: var(--success); margin-top: 2px;">
+                <span>Change Due</span>
+                <span>PKR {{ sale.change_due|floatformat:0 }}</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="receipt-footer">
+        <p style="font-weight: 500; margin-bottom: 4px;">Thank you for your business!</p>
+        <p>Please verify all medicines, quantities, and expiry dates before leaving the billing counter.</p>
+    </div>
+</section>
+{% endblock %}

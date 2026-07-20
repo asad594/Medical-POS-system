@@ -1,0 +1,133 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}MediPOS Store{% endblock %}</title>
+    <link rel="icon" href="{% static 'store/img/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'store/css/styles.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="app-body">
+    <aside class="sidebar" id="app-sidebar">
+        <a class="brand app-brand" href="{% url 'dashboard' %}">
+            <span class="brand-mark">M</span>
+            <span>MediPOS</span>
+        </a>
+        <nav class="side-nav" aria-label="Store navigation">
+            <a href="{% url 'dashboard' %}">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{% url 'pos' %}">
+                <i data-lucide="shopping-cart"></i>
+                <span>New Sale</span>
+            </a>
+            <a href="{% url 'medicines' %}">
+                <i data-lucide="pill"></i>
+                <span>Medicines</span>
+            </a>
+            <a href="{% url 'purchases' %}">
+                <i data-lucide="plus-circle"></i>
+                <span>Add Stock</span>
+            </a>
+            <a href="{% url 'suppliers' %}">
+                <i data-lucide="users"></i>
+                <span>Suppliers</span>
+            </a>
+            <a href="{% url 'alerts' %}">
+                <i data-lucide="bell"></i>
+                <span>Alerts</span>
+            </a>
+            <a href="{% url 'reports' %}">
+                <i data-lucide="bar-chart-3"></i>
+                <span>Reports</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                <i data-lucide="user-circle" style="color: var(--primary); flex-shrink: 0;"></i>
+                <span title="{{ request.user.get_username }}">{{ request.user.get_username }}</span>
+            </div>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="link-button" type="submit" title="Logout">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="app-main">
+        <header class="main-header">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button id="sidebar-toggle" class="secondary-action small" style="min-height: 32px; padding: 0 8px;" title="Toggle Sidebar">
+                    <i data-lucide="menu"></i>
+                </button>
+                <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+                    <span>MediPOS</span>
+                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                    <span style="font-weight: 500; color: var(--ink);">{% block breadcrumb %}Store{% endblock %}</span>
+                </nav>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span class="status-good" style="gap: 4px; display: flex; align-items: center;">
+                    <i data-lucide="activity" style="width: 12px; height: 12px;"></i> Live
+                </span>
+            </div>
+        </header>
+        
+        <div class="content-container">
+            {% if messages %}
+                <div class="message-stack">
+                    {% for message in messages %}
+                        <div class="message {{ message.tags }}">
+                            {% if message.tags == 'success' %}
+                                <i data-lucide="check-circle-2"></i>
+                            {% elif message.tags == 'error' %}
+                                <i data-lucide="alert-triangle"></i>
+                            {% else %}
+                                <i data-lucide="info"></i>
+                            {% endif %}
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Lucide Icon Library -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Sidebar active state highlights
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.side-nav a').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
+                link.classList.add('active');
+            }
+        });
+
+        // Sidebar collapsible toggle
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        const bodyEl = document.body;
+
+        // Restore sidebar state from localStorage
+        if (localStorage.getItem('sidebar-collapsed') === 'true') {
+            bodyEl.classList.add('collapsed-sidebar');
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            bodyEl.classList.toggle('collapsed-sidebar');
+            localStorage.setItem('sidebar-collapsed', bodyEl.classList.contains('collapsed-sidebar'));
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

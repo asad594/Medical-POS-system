@@ -1,0 +1,104 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Add Stock - MediPOS{% endblock %}
+{% block breadcrumb %}Add Stock{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Stock purchase</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">Add Stock</h1>
+    </div>
+    <a class="secondary-action small" href="{% url 'medicines' %}">
+        <i data-lucide="package" style="width: 14px; height: 14px;"></i> Manage Medicines
+    </a>
+</section>
+
+<section class="two-column" style="grid-template-columns: 2fr 1fr; align-items: start;">
+    <!-- Recent stock entries -->
+    <div class="panel">
+        <div class="panel-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="history" style="color: var(--primary);"></i>
+                <h2>Recent Stock Entries</h2>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Date/Time</th><th>Supplier</th><th>Items / Quantity</th><th>Total Cost</th></tr>
+                </thead>
+                <tbody>
+                    {% for purchase in purchases %}
+                        <tr>
+                            <td>{{ purchase.created_at|date:'d M Y, h:i A' }}</td>
+                            <td style="font-weight: 500; color: var(--ink);">{{ purchase.supplier|default:'-' }}</td>
+                            <td>
+                                {% for item in purchase.items.all %}
+                                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                                        <span style="font-weight: 600; color: var(--ink);">{{ item.medicine.name }}</span>
+                                        <span style="font-size: 0.775rem; color: var(--muted);">Qty: {{ item.quantity }}</span>
+                                    </div>
+                                {% endfor %}
+                            </td>
+                            <td><strong>PKR {{ purchase.total_amount|floatformat:0 }}</strong></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" style="text-align: center; color: var(--muted);">No stock entries yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Record purchase form -->
+    <aside class="panel">
+        <div class="panel-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="plus-circle" style="color: var(--primary);"></i>
+                <h2>Record Purchase</h2>
+            </div>
+        </div>
+        <form method="post" style="display: flex; flex-direction: column; gap: 14px;">
+            {% csrf_token %}
+            <div>
+                <label>Supplier</label>
+                {{ form.supplier }}
+            </div>
+            <div>
+                <label>Reference Number</label>
+                {{ form.reference_number }}
+            </div>
+            <div>
+                <label>Medicine</label>
+                {{ form.medicine }}
+            </div>
+            <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div>
+                    <label>Quantity</label>
+                    {{ form.quantity }}
+                </div>
+                <div>
+                    <label>Unit Cost (PKR)</label>
+                    {{ form.unit_cost }}
+                </div>
+            </div>
+            <div>
+                <label>Notes</label>
+                {{ form.notes }}
+            </div>
+            
+            {% if form.errors %}
+                <div class="message error">
+                    <i data-lucide="alert-triangle"></i>
+                    <span>Please check purchase details.</span>
+                </div>
+            {% endif %}
+            
+            <button class="primary-action full-width" type="submit" style="font-weight: 600; width: 100%;">
+                <i data-lucide="check" style="width: 16px; height: 16px;"></i> Add Stock
+            </button>
+        </form>
+    </aside>
+</section>
+{% endblock %}

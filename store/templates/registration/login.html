@@ -1,0 +1,43 @@
+{% extends 'store/public_base.html' %}
+
+{% block title %}Store Login - MediPOS Karachi{% endblock %}
+
+{% block content %}
+<main class="auth-container">
+    <section class="auth-card">
+        <div>
+            <p class="eyebrow" style="text-align: center; color: var(--primary); font-weight: 600;">Store access</p>
+            <h1 style="text-align: center; margin-top: 4px; font-size: 1.5rem;">Login for Admin or Staff</h1>
+            <p style="text-align: center; font-size: 0.825rem; margin-top: 8px; color: var(--muted);">
+                Customers do not log in. This area is only for the medical store counter team.
+            </p>
+        </div>
+        {% if form.errors %}
+            <div class="message error">
+                <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+                <span>Username or password is incorrect.</span>
+            </div>
+        {% endif %}
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            <div>
+                <label for="id_username">Username</label>
+                <div style="position: relative;">
+                    <i data-lucide="user" style="position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; color: var(--muted);"></i>
+                    <input type="text" name="username" autofocus maxlength="150" required id="id_username" placeholder="Enter username" style="padding-left: 38px;">
+                </div>
+            </div>
+            <div>
+                <label for="id_password">Password</label>
+                <div style="position: relative;">
+                    <i data-lucide="lock" style="position: absolute; left: 12px; top: 12px; width: 16px; height: 16px; color: var(--muted);"></i>
+                    <input type="password" name="password" required id="id_password" placeholder="Enter password" style="padding-left: 38px;">
+                </div>
+            </div>
+            <button class="primary-action" type="submit" style="width: 100%;">
+                <i data-lucide="log-in" style="width: 16px; height: 16px;"></i> Login
+            </button>
+        </form>
+    </section>
+</main>
+{% endblock %}

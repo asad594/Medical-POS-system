@@ -1,0 +1,90 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Alerts - MediPOS{% endblock %}
+{% block breadcrumb %}Alerts{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Stock health</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">Alerts</h1>
+    </div>
+    <a class="primary-action" href="{% url 'purchases' %}">
+        <i data-lucide="plus" style="width: 16px; height: 16px;"></i> Add Stock
+    </a>
+</section>
+
+<section class="two-column" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+    <!-- Low Stock column -->
+    <div class="panel">
+        <div class="panel-head" style="border-bottom: 2px solid var(--danger); padding-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="alert-triangle" style="color: var(--danger);"></i>
+                <h2 style="font-size: 1.2rem;">Low Stock</h2>
+            </div>
+            <span class="status-bad" style="font-size: 0.8rem; padding: 2px 8px;">{{ low_stock|length }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; padding: 4px 0;">
+            {% for medicine in low_stock %}
+                <a href="{% url 'medicine_edit' medicine.id %}" style="display: block; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--background); transition: var(--transition);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                        <strong style="color: var(--ink); font-weight: 600;">{{ medicine.name }}</strong>
+                        <span style="font-size: 0.775rem; font-weight: 700; color: var(--danger);">{{ medicine.stock_quantity }} left</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--muted);">Reorder limit is {{ medicine.reorder_level }} units</span>
+                </a>
+            {% empty %}
+                <p style="text-align: center; color: var(--muted); padding: 24px; font-size: 0.875rem;">No low-stock medicines.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Expiring Soon column -->
+    <div class="panel">
+        <div class="panel-head" style="border-bottom: 2px solid var(--warning); padding-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="calendar" style="color: var(--warning);"></i>
+                <h2 style="font-size: 1.2rem;">Expiring Soon</h2>
+            </div>
+            <span class="status-bad" style="background: var(--warning-light); color: var(--warning); font-size: 0.8rem; padding: 2px 8px;">{{ expiring|length }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; padding: 4px 0;">
+            {% for medicine in expiring %}
+                <a href="{% url 'medicine_edit' medicine.id %}" style="display: block; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--background); transition: var(--transition);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                        <strong style="color: var(--ink); font-weight: 600;">{{ medicine.name }}</strong>
+                        <span style="font-size: 0.775rem; font-weight: 700; color: var(--warning);">Expiring</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--muted);">Batch {{ medicine.batch_number|default:'-' }} expires on {{ medicine.expiry_date }}</span>
+                </a>
+            {% empty %}
+                <p style="text-align: center; color: var(--muted); padding: 24px; font-size: 0.875rem;">No medicines expiring in 30 days.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Expired column -->
+    <div class="panel">
+        <div class="panel-head" style="border-bottom: 2px solid var(--danger); padding-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="x-circle" style="color: var(--danger);"></i>
+                <h2 style="font-size: 1.2rem;">Expired Stock</h2>
+            </div>
+            <span class="status-bad" style="font-size: 0.8rem; padding: 2px 8px;">{{ expired|length }}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; padding: 4px 0;">
+            {% for medicine in expired %}
+                <a href="{% url 'medicine_edit' medicine.id %}" style="display: block; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--background); transition: var(--transition);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+                        <strong style="color: var(--ink); font-weight: 600;">{{ medicine.name }}</strong>
+                        <span style="font-size: 0.775rem; font-weight: 700; color: var(--danger);">Expired</span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--muted);">{{ medicine.stock_quantity }} units, expired on {{ medicine.expiry_date }}</span>
+                </a>
+            {% empty %}
+                <p style="text-align: center; color: var(--muted); padding: 24px; font-size: 0.875rem;">No expired medicines in stock.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

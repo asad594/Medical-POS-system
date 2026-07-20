@@ -1,0 +1,251 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Dashboard - MediPOS{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Today at the counter</p>
+        <h1 style="font-size: 2.25rem; font-weight: 800;">Dashboard</h1>
+    </div>
+    <a class="primary-action" href="{% url 'pos' %}">
+        <i data-lucide="plus" style="width: 18px; height: 18px;"></i> Start New Sale
+    </a>
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Total Medicines</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--primary-light); color: var(--primary);">
+                <i data-lucide="pill" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <strong>{{ total_medicines }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Invoices Today</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--primary-light); color: var(--primary);">
+                <i data-lucide="file-text" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <strong>{{ today_invoices }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Sales Today</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--success-light); color: var(--success);">
+                <span style="font-weight: bold; font-size: 0.9rem;">PKR</span>
+            </div>
+        </div>
+        <strong>PKR {{ today_revenue|floatformat:0 }}</strong>
+    </article>
+    <article class="metric-card warning">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Needs Attention</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--warning-light); color: var(--warning);">
+                <i data-lucide="alert-circle" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <strong>{{ low_stock_count|add:expiry_count }}</strong>
+    </article>
+</section>
+
+<!-- Beautiful Analytics Graph -->
+<div class="panel" style="padding: 24px;">
+    <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="trending-up" style="color: var(--primary);"></i>
+            <h2>Sales Analytics</h2>
+        </div>
+        <span style="font-size: 0.8rem; color: var(--muted); font-weight: 500;">Recent invoices breakdown</span>
+    </div>
+    <div style="position: relative; height: 260px; width: 100%;">
+        <canvas id="salesChart"></canvas>
+    </div>
+</div>
+
+<section class="two-column">
+    <div class="panel">
+        <div class="panel-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="alert-octagon" style="color: var(--warning);"></i>
+                <h2>Low Stock Alerts</h2>
+            </div>
+            <a class="secondary-action small" href="{% url 'alerts' %}">View all</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Medicine</th><th>Stock</th><th>Min Level</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for medicine in low_stock %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ medicine.name }}</td>
+                            <td><strong style="color: var(--danger);">{{ medicine.stock_quantity }}</strong></td>
+                            <td>{{ medicine.reorder_level }}</td>
+                            <td><span class="status-bad">Low Stock</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" style="text-align: center; color: var(--muted);">No low-stock medicines.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="calendar" style="color: var(--primary);"></i>
+                <h2>Expiry Watch</h2>
+            </div>
+            <a class="secondary-action small" href="{% url 'alerts' %}">View all</a>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Medicine</th><th>Batch</th><th>Expiry</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for medicine in expiring %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ medicine.name }}</td>
+                            <td>{{ medicine.batch_number|default:'-' }}</td>
+                            <td>{{ medicine.expiry_date }}</td>
+                            <td><span class="status-bad" style="background: var(--warning-light); color: var(--warning);">Expires Soon</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" style="text-align: center; color: var(--muted);">No medicines expiring in 30 days.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="receipt" style="color: var(--primary);"></i>
+            <h2>Recent Counter Invoices</h2>
+        </div>
+        <a class="secondary-action small" href="{% url 'reports' %}">
+            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i> View Reports
+        </a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Invoice Number</th><th>Time Created</th><th>Payment</th><th>Payable Total</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                {% for sale in recent_sales %}
+                    <tr>
+                        <td style="font-weight: 600; font-family: monospace; color: var(--primary);">{{ sale.invoice_number }}</td>
+                        <td>{{ sale.created_at|date:'d M, h:i A' }}</td>
+                        <td>
+                            <span class="status-good" style="background: var(--primary-light); color: var(--primary);">
+                                {{ sale.get_payment_method_display }}
+                            </span>
+                        </td>
+                        <td><strong>PKR {{ sale.payable_total|floatformat:0 }}</strong></td>
+                        <td>
+                            <a class="secondary-action small" href="{% url 'receipt' sale.id %}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px;">
+                                <i data-lucide="eye" style="width: 12px; height: 12px;"></i> Receipt
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" style="text-align: center; color: var(--muted);">No invoices created today yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const salesData = [
+            {% for sale in recent_sales reversed %}
+            {
+                invoice: "{{ sale.invoice_number }}",
+                total: {{ sale.payable_total }},
+                time: "{{ sale.created_at|date:'h:i A' }}"
+            },
+            {% endfor %}
+        ];
+
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        
+        // If there is no data, render a placeholder
+        const labels = salesData.length ? salesData.map(s => s.time) : ['No Data'];
+        const data = salesData.length ? salesData.map(s => s.total) : [0];
+
+        // Theme colors depending on OS prefers-color-scheme
+        const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
+        const labelColor = isDark ? '#94a3b8' : '#64748b';
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Invoice Total (PKR)',
+                    data: data,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.35,
+                    pointBackgroundColor: '#2563eb',
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: labelColor,
+                            font: {
+                                family: 'Inter',
+                                size: 11
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: gridColor
+                        },
+                        ticks: {
+                            color: labelColor,
+                            font: {
+                                family: 'Inter',
+                                size: 11
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

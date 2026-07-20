@@ -1,0 +1,158 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Medicines - MediPOS{% endblock %}
+{% block breadcrumb %}Medicines{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Inventory</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">Medicines</h1>
+    </div>
+    <form method="get" class="search-form" style="display: flex; gap: 8px; width: 300px;">
+        <div style="position: relative; flex: 1;">
+            <i data-lucide="search" style="position: absolute; left: 10px; top: 11px; width: 14px; height: 14px; color: var(--muted);"></i>
+            <input name="q" value="{{ query }}" placeholder="Search inventory..." style="padding-left: 32px; min-height: 36px; font-size: 0.85rem;">
+        </div>
+        <button class="secondary-action small" type="submit" style="min-height: 36px;">Search</button>
+    </form>
+</section>
+
+<section class="two-column" style="grid-template-columns: 2fr 1fr; align-items: start;">
+    <!-- Medicine List Table -->
+    <div class="panel">
+        <div class="panel-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="database" style="color: var(--primary);"></i>
+                <h2>Medicine List</h2>
+            </div>
+            <span style="font-size: 0.85rem; font-weight: 500; color: var(--muted);">{{ medicines|length }} shown</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Batch</th>
+                        <th>Expiry</th>
+                        <th>Stock</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for medicine in medicines %}
+                        <tr>
+                            <td>
+                                <strong style="color: var(--ink); font-size: 0.95rem;">{{ medicine.name }}</strong>
+                                <div style="font-size: 0.775rem; color: var(--muted); margin-top: 1px;">{{ medicine.generic_name|default:'-' }}</div>
+                            </td>
+                            <td><span style="font-family: monospace; font-size: 0.8rem;">{{ medicine.batch_number|default:'-' }}</span></td>
+                            <td>{{ medicine.expiry_date|default:'-' }}</td>
+                            <td><strong>{{ medicine.stock_quantity }}</strong></td>
+                            <td>PKR {{ medicine.sale_price|floatformat:0 }}</td>
+                            <td>
+                                <span class="{% if medicine.is_available_for_sale %}status-good{% else %}status-bad{% endif %}" style="padding: 2px 8px; font-size: 0.75rem;">
+                                    {{ medicine.stock_label }}
+                                </span>
+                            </td>
+                            <td>
+                                <a class="secondary-action small" href="{% url 'medicine_edit' medicine.id %}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px;">
+                                    <i data-lucide="edit" style="width: 12px; height: 12px;"></i> Edit
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="7" style="text-align: center; color: var(--muted);">No medicines saved yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Add Medicine Panel -->
+    <aside class="panel">
+        <div class="panel-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="plus-circle" style="color: var(--primary);"></i>
+                <h2>Add Medicine</h2>
+            </div>
+        </div>
+        <form method="post" style="display: flex; flex-direction: column; gap: 14px;">
+            {% csrf_token %}
+            <div>
+                <label>Name</label>
+                {{ form.name }}
+            </div>
+            <div>
+                <label>Generic Name</label>
+                {{ form.generic_name }}
+            </div>
+            <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div>
+                    <label>Category</label>
+                    {{ form.category }}
+                </div>
+                <div>
+                    <label>Barcode</label>
+                    {{ form.barcode }}
+                </div>
+            </div>
+            <div>
+                <label>Manufacturer</label>
+                {{ form.manufacturer }}
+            </div>
+            <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div>
+                    <label>Batch Number</label>
+                    {{ form.batch_number }}
+                </div>
+                <div>
+                    <label>Expiry Date</label>
+                    {{ form.expiry_date }}
+                </div>
+            </div>
+            <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div>
+                    <label>Purchase Price</label>
+                    {{ form.purchase_price }}
+                </div>
+                <div>
+                    <label>Sale Price</label>
+                    {{ form.sale_price }}
+                </div>
+            </div>
+            <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div>
+                    <label>Initial Stock</label>
+                    {{ form.stock_quantity }}
+                </div>
+                <div>
+                    <label>Low-Stock Level</label>
+                    {{ form.reorder_level }}
+                </div>
+            </div>
+            <div>
+                <label>Supplier</label>
+                {{ form.supplier }}
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+                {{ form.is_active }}
+                <label style="margin: 0; font-weight: 500;">Active for counter sale</label>
+            </div>
+            
+            {% if form.errors %}
+                <div class="message error">
+                    <i data-lucide="alert-triangle"></i>
+                    <span>Please fix highlighted medicine details.</span>
+                </div>
+            {% endif %}
+            
+            <button class="primary-action full-width" type="submit" style="font-weight: 600; width: 100%;">
+                <i data-lucide="check" style="width: 16px; height: 16px;"></i> Save Medicine
+            </button>
+        </form>
+    </aside>
+</section>
+{% endblock %}
