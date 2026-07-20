@@ -14,4 +14,8 @@ urlpatterns = [
     path('purchases/', views.purchases, name='purchases'),
     path('reports/', views.reports, name='reports'),
     path('alerts/', views.alerts, name='alerts'),
+    path('pos/today-transactions/', views.today_transactions, name='today_transactions'),
+    path('pos/close-day/', views.close_day, name='close_day'),
+    path('daily-closing/<int:report_id>/', views.daily_report_detail, name='daily_report_detail'),
+    path('daily-closing/<int:report_id>/reopen/', views.reopen_day, name='reopen_day'),
 ]

@@ -1,6 +1,20 @@
 from django.contrib import admin
 
-from .models import DemoRequest, Medicine, Purchase, PurchaseItem, Sale, SaleItem, Supplier
+from .models import DailyClosingReport, DailySession, DemoRequest, Medicine, Purchase, PurchaseItem, Sale, SaleItem, Supplier
+
+
+@admin.register(DailySession)
+class DailySessionAdmin(admin.ModelAdmin):
+    list_display = ('business_date', 'opened_at', 'closed_at', 'opened_by', 'status')
+    list_filter = ('status', 'business_date')
+    search_fields = ('business_date', 'opened_by__username')
+
+
+@admin.register(DailyClosingReport)
+class DailyClosingReportAdmin(admin.ModelAdmin):
+    list_display = ('report_number', 'business_date', 'total_revenue', 'total_transactions', 'closing_time', 'generated_by')
+    list_filter = ('business_date', 'generated_by')
+    search_fields = ('report_number', 'business_date', 'generated_by__username')
 
 
 @admin.register(Supplier)

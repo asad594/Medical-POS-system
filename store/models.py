@@ -94,6 +94,85 @@ class Medicine(models.Model):
         return 'Available'
 
 
+class DailySession(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('closed', 'Closed'),
+    ]
+    business_date = models.DateField(unique=True)
+    opened_at = models.DateTimeField(default=timezone.now)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    opened_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='opened_sessions')
+    closed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name='closed_sessions')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='open')
+
+    class Meta:
+        ordering = ['-business_date']
+
+    def __str__(self):
+        return f"Session {self.business_date} ({self.get_status_display()})"
+
+    @classmethod
+    def get_active_session(cls, user):
+        open_session = cls.objects.filter(status='open').first()
+        if open_session:
+            return open_session
+        
+        today = timezone.localdate()
+        latest_session = cls.objects.all().order_by('-business_date').first()
+        if latest_session:
+            if latest_session.business_date >= today:
+                business_date = latest_session.business_date + timedelta(days=1)
+            else:
+                business_date = today
+        else:
+            business_date = today
+
+        session = cls.objects.create(
+            business_date=business_date,
+            opened_by=user,
+            status='open'
+        )
+        return session
+
+
+class DailyClosingReport(models.Model):
+    session = models.OneToOneField(DailySession, on_delete=models.PROTECT, related_name='report')
+    report_number = models.CharField(max_length=32, unique=True)
+    business_date = models.DateField(unique=True)
+    opening_time = models.DateTimeField()
+    closing_time = models.DateTimeField()
+    total_revenue = models.DecimalField(max_digits=12, decimal_places=2)
+    total_transactions = models.PositiveIntegerField()
+    total_quantity_sold = models.PositiveIntegerField()
+    total_discount = models.DecimalField(max_digits=12, decimal_places=2)
+    total_tax = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    net_revenue = models.DecimalField(max_digits=12, decimal_places=2)
+    average_sale = models.DecimalField(max_digits=12, decimal_places=2)
+    first_transaction_time = models.DateTimeField(null=True, blank=True)
+    last_transaction_time = models.DateTimeField(null=True, blank=True)
+    cash_sales_total = models.DecimalField(max_digits=12, decimal_places=2)
+    card_sales_total = models.DecimalField(max_digits=12, decimal_places=2)
+    easypaisa_sales_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    jazzcash_sales_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    credit_sales_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    generated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='generated_reports')
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, default='CLOSED')
+
+    class Meta:
+        ordering = ['-business_date']
+
+    def save(self, *args, **kwargs):
+        if not self.report_number:
+            date_str = self.business_date.strftime('%Y%m%d')
+            self.report_number = f"EOD-{date_str}-{self.session.id}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.report_number
+
+
 class Sale(models.Model):
     CASH = 'cash'
     CARD = 'card'
@@ -109,6 +188,7 @@ class Sale(models.Model):
         (CREDIT, 'Credit'),
     ]
 
+    daily_session = models.ForeignKey(DailySession, on_delete=models.PROTECT, null=True, blank=True, related_name='sales')
     invoice_number = models.CharField(max_length=32, unique=True, blank=True)
     customer_name = models.CharField(max_length=120, blank=True)
     customer_phone = models.CharField(max_length=40, blank=True)
@@ -135,6 +215,12 @@ class Sale(models.Model):
         if not self.pk:
             return Decimal('0.00')
         return self.items.aggregate(total=models.Sum('line_total'))['total'] or Decimal('0.00')
+
+    @property
+    def total_quantity(self):
+        if not self.pk:
+            return 0
+        return self.items.aggregate(total=models.Sum('quantity'))['total'] or 0
 
     @property
     def payable_total(self):

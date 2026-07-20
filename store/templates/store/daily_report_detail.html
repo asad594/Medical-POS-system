@@ -1,0 +1,262 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Daily Closing Report {{ report.report_number }} - MediPOS{% endblock %}
+{% block breadcrumb %}Daily Report Details{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        body {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .sidebar, .main-header, .no-print, #sidebar-toggle {
+            display: none !important;
+        }
+        .app-main {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .content-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+        }
+        .printable-report {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 auto !important;
+            max-width: 100% !important;
+            background: transparent !important;
+        }
+        .report-section {
+            break-inside: avoid;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-head no-print">
+    <div>
+        <p class="eyebrow">Archived Closings</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">EOD Report Details</h1>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <button class="secondary-action small" onclick="window.print()" type="button" style="display: inline-flex; align-items: center; gap: 4px; min-height: 36px;">
+            <i data-lucide="printer" style="width: 16px; height: 16px;"></i> Print Report
+        </button>
+        {% if can_reopen %}
+            <form method="post" action="{% url 'reopen_day' report.id %}">
+                {% csrf_token %}
+                <button class="primary-action small warning" type="submit" style="background: var(--warning); border-color: var(--warning); display: inline-flex; align-items: center; gap: 4px; min-height: 36px;">
+                    <i data-lucide="unlock" style="width: 16px; height: 16px;"></i> Reopen Session
+                </button>
+            </form>
+        {% endif %}
+        <a class="secondary-action small" href="{% url 'reports' %}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 36px;">
+            <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to Log
+        </a>
+    </div>
+</section>
+
+<section class="panel printable-report" style="padding: 32px; display: flex; flex-direction: column; gap: 24px; max-width: 1000px; margin: 0 auto;">
+    <!-- Report Header Info -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px dashed var(--border); padding-bottom: 20px;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span class="brand-mark" style="width: 32px; height: 32px; border-radius: var(--radius-sm); background: var(--primary); color: #ffffff; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem;">M</span>
+                <h2 style="font-size: 1.75rem; font-weight: 800; margin: 0; color: var(--ink);">MediPOS Karachi</h2>
+            </div>
+            <p style="font-size: 0.875rem; color: var(--muted); font-weight: 500;">End-of-Day Daily Closing Report</p>
+        </div>
+        <div style="text-align: right;">
+            <span class="status-good" style="background: var(--success-light); color: var(--success); font-weight: 600; font-size: 0.8rem; padding: 2px 10px; display: inline-block; margin-bottom: 8px;">
+                CLOSED BUSINESS DAY
+            </span>
+            <div style="font-family: monospace; font-weight: 700; color: var(--primary); font-size: 1.1rem;">{{ report.report_number }}</div>
+        </div>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; background: var(--surface); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+        <div>
+            <span style="font-size: 0.775rem; color: var(--muted); display: block; margin-bottom: 2px; text-transform: uppercase; font-weight: 600;">Business Date</span>
+            <strong style="color: var(--ink); font-size: 1rem;">{{ report.business_date|date:"l, d F Y" }}</strong>
+        </div>
+        <div>
+            <span style="font-size: 0.775rem; color: var(--muted); display: block; margin-bottom: 2px; text-transform: uppercase; font-weight: 600;">Opening Time</span>
+            <strong style="color: var(--ink); font-size: 1rem;">{{ report.opening_time|date:"d M, h:i A" }}</strong>
+        </div>
+        <div>
+            <span style="font-size: 0.775rem; color: var(--muted); display: block; margin-bottom: 2px; text-transform: uppercase; font-weight: 600;">Closing Time</span>
+            <strong style="color: var(--ink); font-size: 1rem;">{{ report.closing_time|date:"d M, h:i A" }}</strong>
+        </div>
+        <div>
+            <span style="font-size: 0.775rem; color: var(--muted); display: block; margin-bottom: 2px; text-transform: uppercase; font-weight: 600;">Generated By</span>
+            <strong style="color: var(--ink); font-size: 1rem;">{{ report.generated_by.get_username }}</strong>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="report-section">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--ink); display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="calculator" style="width: 18px; height: 18px; color: var(--primary);"></i> Revenue Summary
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+            <div style="border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); text-align: center;">
+                <span style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px;">Gross Revenue</span>
+                <strong style="font-size: 1.2rem; color: var(--ink);">PKR {{ report.total_revenue|floatformat:0 }}</strong>
+            </div>
+            <div style="border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); text-align: center;">
+                <span style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px;">Total Discount</span>
+                <strong style="font-size: 1.2rem; color: var(--danger);">-PKR {{ report.total_discount|floatformat:0 }}</strong>
+            </div>
+            <div style="border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); text-align: center;">
+                <span style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px;">Total Tax</span>
+                <strong style="font-size: 1.2rem; color: var(--ink);">PKR {{ report.total_tax|floatformat:0 }}</strong>
+            </div>
+            <div style="border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-sm); text-align: center; background: var(--success-light); border-color: rgba(34, 197, 94, 0.2);">
+                <span style="font-size: 0.8rem; color: var(--success); display: block; margin-bottom: 4px;">Net Revenue</span>
+                <strong style="font-size: 1.2rem; color: var(--success);">PKR {{ report.net_revenue|floatformat:0 }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Operations Metrics -->
+    <div class="report-section" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+        <!-- Left Sub-card: sales stats -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--ink);">Sales Statistics</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">Total Transactions</span>
+                    <strong style="color: var(--ink);">{{ report.total_transactions }} sales</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">Total Medicine Items Sold</span>
+                    <strong style="color: var(--ink);">{{ report.total_quantity_sold }} items</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">Average Ticket Sale</span>
+                    <strong style="color: var(--ink);">PKR {{ report.average_sale|floatformat:2 }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">First Ticket Time</span>
+                    <strong style="color: var(--ink);">{{ report.first_transaction_time|date:"h:i A"|default:"-" }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted);">Last Ticket Time</span>
+                    <strong style="color: var(--ink);">{{ report.last_transaction_time|date:"h:i A"|default:"-" }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sub-card: payment channels -->
+        <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--ink);">Receipts by Channel</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 0.875rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted); display: flex; align-items: center; gap: 6px;"><i data-lucide="banknote" style="width: 14px; height: 14px;"></i> Cash Sales</span>
+                    <strong style="color: var(--ink);">PKR {{ report.cash_sales_total|floatformat:0 }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted); display: flex; align-items: center; gap: 6px;"><i data-lucide="credit-card" style="width: 14px; height: 14px;"></i> Credit Card</span>
+                    <strong style="color: var(--ink);">PKR {{ report.card_sales_total|floatformat:0 }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted); display: flex; align-items: center; gap: 6px;"><i data-lucide="smartphone" style="width: 14px; height: 14px;"></i> Easypaisa</span>
+                    <strong style="color: var(--ink);">PKR {{ report.easypaisa_sales_total|floatformat:0 }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted); display: flex; align-items: center; gap: 6px;"><i data-lucide="smartphone" style="width: 14px; height: 14px;"></i> JazzCash</span>
+                    <strong style="color: var(--ink);">PKR {{ report.jazzcash_sales_total|floatformat:0 }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--muted); display: flex; align-items: center; gap: 6px;"><i data-lucide="users" style="width: 14px; height: 14px;"></i> Store Credit</span>
+                    <strong style="color: var(--ink);">PKR {{ report.credit_sales_total|floatformat:0 }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medicine Sold Quantities (Itemized Ledger) -->
+    <div class="report-section">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--ink); display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="pill" style="width: 18px; height: 18px; color: var(--primary);"></i> Medicines Sales Ledger
+        </h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Medicine Product Name</th>
+                        <th style="text-align: center;">Batch</th>
+                        <th style="text-align: center;">Qty Sold</th>
+                        <th style="text-align: right;">Unit Price</th>
+                        <th style="text-align: right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for med in medicines_sold %}
+                        <tr>
+                            <td style="font-weight: 600;">{{ med.medicine_name }}</td>
+                            <td style="text-align: center; font-family: monospace;">{{ med.batch_number|default:"-" }}</td>
+                            <td style="text-align: center;"><strong>{{ med.total_quantity }}</strong></td>
+                            <td style="text-align: right;">PKR {{ med.unit_price|floatformat:0 }}</td>
+                            <td style="text-align: right; font-weight: 600; color: var(--ink);">PKR {{ med.total_amount|floatformat:0 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" style="text-align: center; color: var(--muted);">No medicines sold in this session.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Transactions List -->
+    <div class="report-section">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--ink); display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="receipt" style="width: 18px; height: 18px; color: var(--primary);"></i> Closed Sales Transactions
+        </h3>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Invoice Number</th>
+                        <th>Created At</th>
+                        <th>Customer Details</th>
+                        <th>Payment Method</th>
+                        <th style="text-align: right;">Discount</th>
+                        <th style="text-align: right;">Net Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                        <tr>
+                            <td style="font-weight: 600; font-family: monospace; color: var(--primary);">{{ sale.invoice_number }}</td>
+                            <td>{{ sale.created_at|date:"h:i A" }}</td>
+                            <td>{{ sale.customer_name|default:"Walk-in Customer" }}</td>
+                            <td>{{ sale.get_payment_method_display }}</td>
+                            <td style="text-align: right; color: var(--danger);">-PKR {{ sale.discount|floatformat:0 }}</td>
+                            <td style="text-align: right; font-weight: 600; color: var(--ink);">PKR {{ sale.payable_total|floatformat:0 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6" style="text-align: center; color: var(--muted);">No transactions in this report.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Report footer signoff (for printable document) -->
+    <div style="display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted);">
+        <div>
+            <span>Audit Signature: _______________________</span>
+        </div>
+        <div style="text-align: right;">
+            <span>EOD Report Generated on {{ report.created_at|date:"d M Y, h:i A" }}</span>
+        </div>
+    </div>
+</section>
+{% endblock %}

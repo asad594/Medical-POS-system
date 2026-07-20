@@ -1,0 +1,224 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Today's Transactions - MediPOS{% endblock %}
+{% block breadcrumb %}Today's Transactions{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">Open Business Day Session</p>
+        <h1 style="font-size: 2rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="clock" style="color: var(--primary);"></i> Today's Transactions
+        </h1>
+    </div>
+    {% if session %}
+        {% if request.user.is_staff %}
+            <button class="primary-action danger" onclick="openCloseDayModal()" style="background: var(--danger); border-color: var(--danger);">
+                <i data-lucide="lock" style="width: 16px; height: 16px;"></i> Close Business Day
+            </button>
+        {% endif %}
+    {% endif %}
+</section>
+
+{% if session %}
+<div class="message info" style="margin-bottom: 24px; border-left: 4px solid var(--primary); padding: 12px; border-radius: var(--radius-sm); background: var(--primary-light); color: var(--primary); font-size: 0.85rem; font-weight: 500;">
+    <i data-lucide="info" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+    <span>Currently active business date: <strong>{{ session.business_date|date:"d M Y" }}</strong>. Opened by {{ session.opened_by.get_username }} at {{ session.opened_at|date:"h:i A" }}.</span>
+</div>
+{% else %}
+<div class="message warning" style="margin-bottom: 24px; border-left: 4px solid var(--warning); padding: 12px; border-radius: var(--radius-sm); background: var(--warning-light); color: var(--warning); font-size: 0.85rem; font-weight: 500;">
+    <i data-lucide="alert-triangle" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+    <span>No active daily session is open. A new business session will automatically open when the cashier processes the next counter sale.</span>
+</div>
+{% endif %}
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Today's Revenue</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--success-light); color: var(--success);">
+                <span style="font-weight: bold; font-size: 0.9rem;">PKR</span>
+            </div>
+        </div>
+        <strong style="color: var(--success);">PKR {{ total_revenue|floatformat:0 }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Total Transactions</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--primary-light); color: var(--primary);">
+                <i data-lucide="shopping-cart" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <strong>{{ total_transactions }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Total Items Sold</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--primary-light); color: var(--primary);">
+                <i data-lucide="pill" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <strong>{{ total_quantity_sold }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Total Discount</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--warning-light); color: var(--warning);">
+                <span style="font-weight: bold; font-size: 0.9rem;">PKR</span>
+            </div>
+        </div>
+        <strong>PKR {{ total_discount|floatformat:0 }}</strong>
+    </article>
+    <article class="metric-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+            <span>Total Tax</span>
+            <div style="padding: 6px; border-radius: var(--radius-sm); background: var(--primary-light); color: var(--primary);">
+                <i data-lucide="percent" style="width: 20px; height: 20px;"></i>
+            </div>
+        </div>
+        <strong>PKR {{ total_tax|floatformat:0 }}</strong>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="list" style="color: var(--primary);"></i>
+            <h2>Transactions Ledger</h2>
+        </div>
+        <span class="status-good" style="padding: 2px 8px; font-size: 0.725rem;">OPEN SESSION</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Invoice Number</th>
+                    <th>Customer Name / Phone</th>
+                    <th>Date / Time</th>
+                    <th>Items Purchased</th>
+                    <th style="text-align: center;">Qty</th>
+                    <th>Subtotal</th>
+                    <th>Discount</th>
+                    <th>Tax</th>
+                    <th>Grand Total</th>
+                    <th>Payment</th>
+                    <th>Cash Paid</th>
+                    <th>Change Due</th>
+                    <th>Status</th>
+                    <th>Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                    <tr>
+                        <td style="font-weight: 600; font-family: monospace; color: var(--primary);">{{ sale.invoice_number }}</td>
+                        <td>
+                            <strong style="color: var(--ink);">{{ sale.customer_name|default:'Walk-in customer' }}</strong>
+                            <div style="font-size: 0.775rem; color: var(--muted); margin-top: 1px;">{{ sale.customer_phone|default:'-' }}</div>
+                        </td>
+                        <td>
+                            <div>{{ sale.created_at|date:"d M Y" }}</div>
+                            <div style="font-size: 0.775rem; color: var(--muted); margin-top: 1px;">{{ sale.created_at|date:"h:i A" }}</div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.85rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{% for item in sale.items.all %}{{ item.medicine_name }} x {{ item.quantity }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                                {% for item in sale.items.all %}
+                                    {{ item.medicine_name }} x {{ item.quantity }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <strong>
+                                {{ sale.total_quantity }}
+                            </strong>
+                        </td>
+                        <td>PKR {{ sale.subtotal|floatformat:0 }}</td>
+                        <td style="color: var(--danger);">-PKR {{ sale.discount|floatformat:0 }}</td>
+                        <td>PKR 0</td>
+                        <td><strong style="color: var(--primary);">PKR {{ sale.payable_total|floatformat:0 }}</strong></td>
+                        <td>
+                            <span class="status-good" style="background: var(--primary-light); color: var(--primary); font-size: 0.725rem; padding: 2px 6px;">
+                                {{ sale.get_payment_method_display }}
+                            </span>
+                        </td>
+                        <td>PKR {{ sale.amount_paid|floatformat:0 }}</td>
+                        <td style="color: var(--success);">PKR {{ sale.change_due|floatformat:0 }}</td>
+                        <td>
+                            <span class="status-bad" style="background: var(--warning-light); color: var(--warning); font-size: 0.725rem; padding: 2px 8px;">
+                                Open
+                            </span>
+                        </td>
+                        <td>
+                            <a class="secondary-action small" href="{% url 'receipt' sale.id %}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px;">
+                                <i data-lucide="eye" style="width: 12px; height: 12px;"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="14" style="text-align: center; color: var(--muted);">No sales recorded in the active business session yet today.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Close Day Confirmation Modal -->
+<div id="close-day-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; place-items: center; z-index: 1000;">
+    <div class="panel" style="max-width: 480px; width: 100%; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); animation: slideIn 0.2s ease-out; border: 1px solid var(--border);">
+        <div class="panel-head" style="border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="alert-octagon" style="color: var(--danger);"></i>
+                <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--ink);">Confirm End-of-Day Closing</h2>
+            </div>
+            <button class="secondary-action small" onclick="closeCloseDayModal()" style="border: none; padding: 4px; min-height: unset; background: transparent;" aria-label="Close modal">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </button>
+        </div>
+        <div style="padding: 24px 0; color: var(--muted); font-size: 0.9rem; line-height: 1.5; display: flex; flex-direction: column; gap: 12px;">
+            <p>
+                This action will **close** the daily session for business date **{{ session.business_date|date:"d M Y" }}** and generate the official **Daily Closing EOD Report**.
+            </p>
+            <p style="background: var(--warning-light); border-left: 4px solid var(--warning); padding: 10px; color: var(--warning); border-radius: var(--radius-sm); font-weight: 500;">
+                All today's transactions will be marked closed and archived. You will not be able to add new sales to this session.
+            </p>
+            <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse; margin-top: 10px; border: 1px solid var(--border);">
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 8px; font-weight: 600; color: var(--ink); background: var(--surface);">Session Date</td>
+                    <td style="padding: 8px; text-align: right;">{{ session.business_date|date:"d M Y" }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 8px; font-weight: 600; color: var(--ink); background: var(--surface);">Transactions Count</td>
+                    <td style="padding: 8px; text-align: right; font-weight: 700;">{{ total_transactions }} sales</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; font-weight: 600; color: var(--ink); background: var(--surface);">Net EOD Revenue</td>
+                    <td style="padding: 8px; text-align: right; font-weight: 700; color: var(--success);">PKR {{ total_revenue|floatformat:0 }}</td>
+                </tr>
+            </table>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 16px;">
+            <button class="secondary-action" onclick="closeCloseDayModal()">Cancel</button>
+            <form method="post" action="{% url 'close_day' %}">
+                {% csrf_token %}
+                <button class="primary-action danger" type="submit" style="background: var(--danger); border-color: var(--danger);">
+                    Yes, Close Business Day
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openCloseDayModal() {
+        const modal = document.getElementById('close-day-modal');
+        modal.style.display = 'grid';
+    }
+    
+    function closeCloseDayModal() {
+        const modal = document.getElementById('close-day-modal');
+        modal.style.display = 'none';
+    }
+</script>
+{% endblock %}

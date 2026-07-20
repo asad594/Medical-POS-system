@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .forms import CheckoutForm, DemoRequestForm, MedicineForm, PurchaseStockForm, SupplierForm
-from .models import Medicine, Purchase, PurchaseItem, Sale, SaleItem, Supplier
+from .models import DailyClosingReport, DailySession, Medicine, Purchase, PurchaseItem, Sale, SaleItem, Supplier
 
 
 def _money(value):
@@ -194,6 +194,7 @@ def _checkout_sale(request, cart):
     amount_paid = _money(form.cleaned_data.get('amount_paid'))
 
     with transaction.atomic():
+        session = DailySession.get_active_session(request.user)
         locked_medicines = Medicine.objects.select_for_update().filter(id__in=[line['medicine'].id for line in lines])
         medicine_map = {medicine.id: medicine for medicine in locked_medicines}
 
@@ -207,6 +208,7 @@ def _checkout_sale(request, cart):
                 return redirect('pos')
 
         sale = Sale.objects.create(
+            daily_session=session,
             customer_name=form.cleaned_data.get('customer_name', ''),
             customer_phone=form.cleaned_data.get('customer_phone', ''),
             payment_method=form.cleaned_data['payment_method'],
@@ -354,21 +356,40 @@ def reports(request):
     start = request.GET.get('start') or today.replace(day=1).isoformat()
     end = request.GET.get('end') or today.isoformat()
 
-    sales = Sale.objects.filter(created_at__date__gte=start, created_at__date__lte=end).prefetch_related('items')
-    revenue = SaleItem.objects.filter(sale__in=sales).aggregate(total=Sum('line_total'))['total'] or Decimal('0.00')
-    discount = sales.aggregate(total=Sum('discount'))['total'] or Decimal('0.00')
-    net_revenue = max(revenue - discount, Decimal('0.00'))
-    items_sold = SaleItem.objects.filter(sale__in=sales).aggregate(total=Sum('quantity'))['total'] or 0
+    query = request.GET.get('q', '').strip()
+    reports_list = DailyClosingReport.objects.filter(business_date__gte=start, business_date__lte=end).select_related('generated_by')
+    if query:
+        reports_list = reports_list.filter(
+            Q(report_number__icontains=query) | Q(generated_by__username__icontains=query)
+        )
+
+    totals = reports_list.aggregate(
+        rev=Sum('total_revenue'),
+        txs=Sum('total_transactions'),
+        disc=Sum('total_discount'),
+        tax=Sum('total_tax'),
+        qty=Sum('total_quantity_sold')
+    )
+
+    revenue = totals['rev'] or Decimal('0.00')
+    discount = totals['disc'] or Decimal('0.00')
+    tax = totals['tax'] or Decimal('0.00')
+    net_revenue = max(revenue, Decimal('0.00'))
+    total_transactions = totals['txs'] or 0
+    total_quantity_sold = totals['qty'] or 0
 
     context = {
         'start': start,
         'end': end,
-        'sales': sales[:80],
+        'query': query,
+        'reports': reports_list,
         'revenue': revenue,
         'discount': discount,
         'net_revenue': net_revenue,
-        'items_sold': items_sold,
-        'invoice_count': sales.count(),
+        'invoice_count': reports_list.count(),
+        'total_transactions': total_transactions,
+        'total_quantity_sold': total_quantity_sold,
+        'total_tax': tax,
     }
     return render(request, 'store/reports.html', context)
 
@@ -385,3 +406,180 @@ def alerts(request):
         is_active=True,
     ).order_by('expiry_date')
     return render(request, 'store/alerts.html', {'low_stock': low_stock, 'expired': expired, 'expiring': expiring})
+
+
+@login_required
+def today_transactions(request):
+    session = DailySession.objects.filter(status='open').first()
+    sales = []
+    total_revenue = Decimal('0.00')
+    total_discount = Decimal('0.00')
+    total_tax = Decimal('0.00')
+    total_quantity_sold = 0
+    total_transactions = 0
+
+    if session:
+        sales = session.sales.prefetch_related('items').select_related('created_by').all().order_by('-created_at')
+        total_transactions = sales.count()
+        for sale in sales:
+            total_revenue += sale.payable_total
+            total_discount += sale.discount
+            qty_sold = sale.items.aggregate(total=Sum('quantity'))['total'] or 0
+            total_quantity_sold += qty_sold
+
+    context = {
+        'session': session,
+        'sales': sales,
+        'total_revenue': total_revenue,
+        'total_transactions': total_transactions,
+        'total_quantity_sold': total_quantity_sold,
+        'total_discount': total_discount,
+        'total_tax': total_tax,
+    }
+    return render(request, 'store/today_transactions.html', context)
+
+
+@login_required
+@transaction.atomic
+def close_day(request):
+    if not request.user.is_staff:
+        messages.error(request, 'You are not authorized to perform daily closing.')
+        return redirect('today_transactions')
+
+    if request.method != 'POST':
+        return redirect('today_transactions')
+
+    session = DailySession.objects.filter(status='open').select_for_update().first()
+    if not session:
+        messages.error(request, 'No active daily session open.')
+        return redirect('today_transactions')
+
+    sales = session.sales.select_for_update().all()
+    
+    total_revenue = Decimal('0.00')
+    total_discount = Decimal('0.00')
+    total_tax = Decimal('0.00')
+    total_quantity_sold = 0
+    total_transactions = sales.count()
+
+    cash_sales_total = Decimal('0.00')
+    card_sales_total = Decimal('0.00')
+    easypaisa_sales_total = Decimal('0.00')
+    jazzcash_sales_total = Decimal('0.00')
+    credit_sales_total = Decimal('0.00')
+
+    first_transaction_time = None
+    last_transaction_time = None
+
+    for sale in sales:
+        total_revenue += sale.payable_total
+        total_discount += sale.discount
+        qty_sold = sale.items.aggregate(total=Sum('quantity'))['total'] or 0
+        total_quantity_sold += qty_sold
+
+        if sale.payment_method == 'cash':
+            cash_sales_total += sale.payable_total
+        elif sale.payment_method == 'card':
+            card_sales_total += sale.payable_total
+        elif sale.payment_method == 'easypaisa':
+            easypaisa_sales_total += sale.payable_total
+        elif sale.payment_method == 'jazzcash':
+            jazzcash_sales_total += sale.payable_total
+        elif sale.payment_method == 'credit':
+            credit_sales_total += sale.payable_total
+
+        if not first_transaction_time or sale.created_at < first_transaction_time:
+            first_transaction_time = sale.created_at
+        if not last_transaction_time or sale.created_at > last_transaction_time:
+            last_transaction_time = sale.created_at
+
+    net_revenue = total_revenue
+    average_sale = total_revenue / total_transactions if total_transactions > 0 else Decimal('0.00')
+
+    session.status = 'closed'
+    session.closed_at = timezone.now()
+    session.closed_by = request.user
+    session.save(update_fields=['status', 'closed_at', 'closed_by'])
+
+    report = DailyClosingReport.objects.create(
+        session=session,
+        business_date=session.business_date,
+        opening_time=session.opened_at,
+        closing_time=session.closed_at,
+        total_revenue=total_revenue,
+        total_transactions=total_transactions,
+        total_quantity_sold=total_quantity_sold,
+        total_discount=total_discount,
+        total_tax=total_tax,
+        net_revenue=net_revenue,
+        average_sale=average_sale,
+        first_transaction_time=first_transaction_time,
+        last_transaction_time=last_transaction_time,
+        cash_sales_total=cash_sales_total,
+        card_sales_total=card_sales_total,
+        easypaisa_sales_total=easypaisa_sales_total,
+        jazzcash_sales_total=jazzcash_sales_total,
+        credit_sales_total=credit_sales_total,
+        generated_by=request.user,
+    )
+
+    messages.success(request, f'Daily closing completed. Report {report.report_number} generated.')
+    return redirect('daily_report_detail', report_id=report.id)
+
+
+@login_required
+def daily_report_detail(request, report_id):
+    report = get_object_or_404(DailyClosingReport.objects.select_related('session', 'generated_by'), pk=report_id)
+    sales = report.session.sales.prefetch_related('items').select_related('created_by').all().order_by('created_at')
+
+    medicines_sold = SaleItem.objects.filter(sale__in=sales).values(
+        'medicine_name', 'batch_number', 'unit_price'
+    ).annotate(
+        total_quantity=Sum('quantity'),
+        total_amount=Sum('line_total')
+    ).order_by('medicine_name')
+
+    active_exists = DailySession.objects.filter(status='open').exists()
+    later_exists = DailySession.objects.filter(business_date__gt=report.business_date).exists()
+    can_reopen = not active_exists and not later_exists
+
+    context = {
+        'report': report,
+        'sales': sales,
+        'medicines_sold': medicines_sold,
+        'can_reopen': can_reopen,
+    }
+    return render(request, 'store/daily_report_detail.html', context)
+
+
+@login_required
+@transaction.atomic
+def reopen_day(request, report_id):
+    if not request.user.is_staff:
+        messages.error(request, 'You are not authorized to reopen daily sessions.')
+        return redirect('reports')
+
+    if request.method != 'POST':
+        return redirect('daily_report_detail', report_id=report_id)
+
+    report = get_object_or_404(DailyClosingReport, pk=report_id)
+    session = report.session
+
+    active_session = DailySession.objects.filter(status='open').first()
+    if active_session:
+        messages.error(request, f'Cannot reopen. Session {active_session.business_date} is currently active. Close it first.')
+        return redirect('daily_report_detail', report_id=report_id)
+
+    later_session = DailySession.objects.filter(business_date__gt=session.business_date).first()
+    if later_session:
+        messages.error(request, 'Cannot reopen. Accounting lock: later sessions exist in history.')
+        return redirect('daily_report_detail', report_id=report_id)
+
+    report.delete()
+    session.status = 'open'
+    session.closed_at = None
+    session.closed_by = None
+    session.save(update_fields=['status', 'closed_at', 'closed_by'])
+
+    messages.success(request, f'Session {session.business_date} successfully reopened.')
+    return redirect('today_transactions')
