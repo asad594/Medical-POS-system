@@ -93,7 +93,7 @@
                         <td><strong>{{ medicine.stock_quantity }}</strong></td>
                         <td><strong style="color: var(--ink);">PKR {{ medicine.sale_price|floatformat:0 }}</strong></td>
                         <td>
-                            <span class="{% if medicine.is_available_for_sale %}status-good{% else %}status-bad{% endif %}" style="padding: 2px 8px; font-size: 0.75rem;">
+                            <span class="{{ medicine.stock_status_class }}" style="padding: 2px 8px; font-size: 0.75rem;">
                                 {{ medicine.stock_label }}
                             </span>
                         </td>

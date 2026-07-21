@@ -85,6 +85,8 @@ class Medicine(models.Model):
 
     @property
     def stock_label(self):
+        if not self.is_active:
+            return 'Inactive'
         if self.is_expired:
             return 'Expired'
         if self.stock_quantity == 0:
@@ -92,6 +94,15 @@ class Medicine(models.Model):
         if self.is_low_stock:
             return 'Low stock'
         return 'Available'
+
+    @property
+    def stock_status_class(self):
+        if not self.is_active or self.is_expired or self.stock_quantity == 0:
+            return 'status-bad'
+        if self.is_low_stock:
+            return 'status-warning'
+        return 'status-good'
+
 
 
 class DailySession(models.Model):

@@ -136,7 +136,7 @@
                             <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 0.725rem; color: var(--muted); text-transform: capitalize;">
                                 {{ medicine.get_category_display }}
                             </span>
-                            <span class="{% if medicine.is_available_for_sale %}status-good{% else %}status-bad{% endif %}" style="padding: 1px 6px; font-size: 0.725rem;">
+                            <span class="{{ medicine.stock_status_class }}" style="padding: 1px 6px; font-size: 0.725rem;">
                                 {{ medicine.stock_label }}
                             </span>
                         </div>
