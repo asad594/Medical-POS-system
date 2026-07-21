@@ -7,9 +7,10 @@
 <section class="page-head">
     <div>
         <p class="eyebrow">Inventory</p>
-        <h1 style="font-size: 2rem; font-weight: 800;">Medicines</h1>
+        <h1 style="font-size: 2rem; font-weight: 800;">Medicines Inventory</h1>
     </div>
-    <form method="get" class="search-form" style="display: flex; gap: 8px; width: 300px;">
+    <form method="get" class="search-form" style="display: flex; gap: 8px; width: 320px;">
+        <input type="hidden" name="category" value="{{ category|default:'all' }}">
         <div style="position: relative; flex: 1;">
             <i data-lucide="search" style="position: absolute; left: 10px; top: 11px; width: 14px; height: 14px; color: var(--muted);"></i>
             <input name="q" value="{{ query }}" placeholder="Search inventory..." style="padding-left: 32px; min-height: 36px; font-size: 0.85rem;">
@@ -18,13 +19,32 @@
     </form>
 </section>
 
+<!-- Category Filter Pills -->
+<div class="category-tab-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 16px 0; scrollbar-width: none;">
+    <a href="{% url 'medicines' %}?q={{ query }}&category=all" class="category-pill {% if category == 'all' or not category %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+        <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i> All Items
+    </a>
+    <a href="{% url 'medicines' %}?q={{ query }}&category=medicines" class="category-pill {% if category == 'medicines' or category == 'tablet' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+        <i data-lucide="pill" style="width: 14px; height: 14px;"></i> Medicines
+    </a>
+    <a href="{% url 'medicines' %}?q={{ query }}&category=cream" class="category-pill {% if category == 'cream' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+        <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Creams
+    </a>
+    <a href="{% url 'medicines' %}?q={{ query }}&category=syrup" class="category-pill {% if category == 'syrup' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+        <i data-lucide="beaker" style="width: 14px; height: 14px;"></i> Syrups
+    </a>
+    <a href="{% url 'medicines' %}?q={{ query }}&category=other" class="category-pill {% if category == 'other' or category == 'drops' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+        <i data-lucide="package" style="width: 14px; height: 14px;"></i> Others
+    </a>
+</div>
+
 <section class="two-column" style="grid-template-columns: 2fr 1fr; align-items: start;">
     <!-- Medicine List Table -->
     <div class="panel">
         <div class="panel-head">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <i data-lucide="database" style="color: var(--primary);"></i>
-                <h2>Medicine List</h2>
+                <h2>Inventory List</h2>
             </div>
             <span style="font-size: 0.85rem; font-weight: 500; color: var(--muted);">{{ medicines|length }} shown</span>
         </div>
@@ -32,7 +52,8 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Medicine</th>
+                        <th>Item Name</th>
+                        <th>Category</th>
                         <th>Batch</th>
                         <th>Expiry</th>
                         <th>Stock</th>
@@ -48,6 +69,11 @@
                                 <strong style="color: var(--ink); font-size: 0.95rem;">{{ medicine.name }}</strong>
                                 <div style="font-size: 0.775rem; color: var(--muted); margin-top: 1px;">{{ medicine.generic_name|default:'-' }}</div>
                             </td>
+                            <td>
+                                <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 0.75rem; color: var(--muted); text-transform: capitalize;">
+                                    {{ medicine.get_category_display }}
+                                </span>
+                            </td>
                             <td><span style="font-family: monospace; font-size: 0.8rem;">{{ medicine.batch_number|default:'-' }}</span></td>
                             <td>{{ medicine.expiry_date|default:'-' }}</td>
                             <td><strong>{{ medicine.stock_quantity }}</strong></td>
@@ -57,6 +83,7 @@
                                     {{ medicine.stock_label }}
                                 </span>
                             </td>
+
                             <td>
                                 <a class="secondary-action small" href="{% url 'medicine_edit' medicine.id %}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px;">
                                     <i data-lucide="edit" style="width: 12px; height: 12px;"></i> Edit

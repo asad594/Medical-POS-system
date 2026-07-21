@@ -66,6 +66,7 @@
     <!-- Left Panel: Medicine Search & Catalog -->
     <div class="panel pos-search-panel" style="gap: 16px;">
         <form method="get" class="search-form">
+            <input type="hidden" name="category" value="{{ category|default:'all' }}">
             <label for="medicine-search" style="font-weight: 600;">Search Medicine (by Name, Generic, Barcode, or Batch)</label>
             <div class="search-row">
                 <div style="position: relative; flex: 1;">
@@ -76,6 +77,25 @@
                     Search
                 </button>
             </div>
+
+            <!-- Category Filter Tabs -->
+            <div class="category-tab-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 0 2px 0; margin-top: 4px; scrollbar-width: none;">
+                <a href="{% url 'pos' %}?q={{ query }}&category=all" class="category-pill {% if category == 'all' or not category %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+                    <i data-lucide="layout-grid" style="width: 13px; height: 13px;"></i> All Items
+                </a>
+                <a href="{% url 'pos' %}?q={{ query }}&category=medicines" class="category-pill {% if category == 'medicines' or category == 'tablet' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+                    <i data-lucide="pill" style="width: 13px; height: 13px;"></i> Medicines
+                </a>
+                <a href="{% url 'pos' %}?q={{ query }}&category=cream" class="category-pill {% if category == 'cream' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+                    <i data-lucide="sparkles" style="width: 13px; height: 13px;"></i> Creams
+                </a>
+                <a href="{% url 'pos' %}?q={{ query }}&category=syrup" class="category-pill {% if category == 'syrup' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+                    <i data-lucide="beaker" style="width: 13px; height: 13px;"></i> Syrups
+                </a>
+                <a href="{% url 'pos' %}?q={{ query }}&category=other" class="category-pill {% if category == 'other' or category == 'drops' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
+                    <i data-lucide="package" style="width: 13px; height: 13px;"></i> Others
+                </a>
+            </div>
         </form>
 
         <div class="medicine-results">
@@ -83,7 +103,13 @@
                 <article class="medicine-row">
                     <div style="flex: 1;">
                         <h2 style="font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="pill" style="width: 16px; height: 16px; color: var(--muted); margin-top: 1px;"></i>
+                            {% if medicine.category == 'cream' %}
+                                <i data-lucide="sparkles" style="width: 16px; height: 16px; color: #ec4899; flex-shrink: 0;"></i>
+                            {% elif medicine.category == 'syrup' %}
+                                <i data-lucide="beaker" style="width: 16px; height: 16px; color: #06b6d4; flex-shrink: 0;"></i>
+                            {% else %}
+                                <i data-lucide="pill" style="width: 16px; height: 16px; color: #3b82f6; flex-shrink: 0;"></i>
+                            {% endif %}
                             {{ medicine.name }}
                         </h2>
                         <p style="font-size: 0.85rem; color: var(--muted); margin-top: 2px;">
@@ -96,6 +122,9 @@
                             </span>
                             <span style="display: flex; align-items: center; gap: 4px; color: var(--ink); font-weight: 600;">
                                 PKR {{ medicine.sale_price|floatformat:0 }}
+                            </span>
+                            <span style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 0.725rem; color: var(--muted); text-transform: capitalize;">
+                                {{ medicine.get_category_display }}
                             </span>
                             <span class="{% if medicine.is_available_for_sale %}status-good{% else %}status-bad{% endif %}" style="padding: 1px 6px; font-size: 0.725rem;">
                                 {{ medicine.stock_label }}

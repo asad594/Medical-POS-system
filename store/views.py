@@ -158,7 +158,17 @@ def pos(request):
             return _checkout_sale(request, cart)
 
     query = request.GET.get('q', '').strip()
+    category = request.GET.get('category', 'all').strip()
+
     medicines = Medicine.objects.filter(is_active=True).select_related('supplier')
+    if category and category != 'all':
+        if category in ['medicines', 'tablet']:
+            medicines = medicines.filter(category__in=['tablet', 'capsule', 'injection'])
+        elif category == 'other':
+            medicines = medicines.filter(category__in=['other', 'drops'])
+        else:
+            medicines = medicines.filter(category=category)
+
     if query:
         medicines = medicines.filter(
             Q(name__icontains=query)
@@ -167,17 +177,19 @@ def pos(request):
             | Q(batch_number__icontains=query)
             | Q(manufacturer__icontains=query)
         )
-    medicines = medicines.order_by('name', 'expiry_date')[:40]
+    medicines = medicines.order_by('name', 'expiry_date')[:60]
 
     lines, subtotal = _cart_lines(cart)
     context = {
         'query': query,
+        'category': category,
         'medicines': medicines,
         'cart_lines': lines,
         'subtotal': subtotal,
         'checkout_form': CheckoutForm(),
     }
     return render(request, 'store/pos.html', context)
+
 
 
 def _checkout_sale(request, cart):
@@ -246,13 +258,22 @@ def receipt(request, sale_id):
 @login_required
 def medicines(request):
     query = request.GET.get('q', '').strip()
+    category = request.GET.get('category', 'all').strip()
     form = MedicineForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Medicine saved.')
+        med = form.save()
+        messages.success(request, f'"{med.name}" saved under category {med.get_category_display()}.')
         return redirect('medicines')
 
     medicine_list = Medicine.objects.select_related('supplier')
+    if category and category != 'all':
+        if category in ['medicines', 'tablet']:
+            medicine_list = medicine_list.filter(category__in=['tablet', 'capsule', 'injection'])
+        elif category == 'other':
+            medicine_list = medicine_list.filter(category__in=['other', 'drops'])
+        else:
+            medicine_list = medicine_list.filter(category=category)
+
     if query:
         medicine_list = medicine_list.filter(
             Q(name__icontains=query)
@@ -267,10 +288,12 @@ def medicines(request):
         'store/medicines.html',
         {
             'form': form,
-            'medicines': medicine_list[:100],
+            'medicines': medicine_list[:150],
             'query': query,
+            'category': category,
         },
     )
+
 
 
 @login_required

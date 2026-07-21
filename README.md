@@ -1,4 +1,4 @@
-# MediPOS Karachi 💊
+d# MediPOS Karachi 💊
 
 A premium, production-grade medical store Point-of-Sale (POS) and inventory management system designed for pharmacies in Karachi. Built with Django and wrapped in a lightweight desktop Webview client, it provides an offline-first, native-feeling desktop experience with a clean visual design inspired by Stripe and Vercel.
 
