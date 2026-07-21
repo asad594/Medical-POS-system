@@ -18,4 +18,9 @@ urlpatterns = [
     path('pos/close-day/', views.close_day, name='close_day'),
     path('daily-closing/<int:report_id>/', views.daily_report_detail, name='daily_report_detail'),
     path('daily-closing/<int:report_id>/reopen/', views.reopen_day, name='reopen_day'),
+    path('cashiers/', views.cashiers, name='cashiers'),
+    path('cashiers/add/', views.cashier_add, name='cashier_add'),
+    path('cashiers/<int:user_id>/edit/', views.cashier_edit, name='cashier_edit'),
+    path('cashiers/<int:user_id>/toggle/', views.cashier_toggle, name='cashier_toggle'),
 ]
+

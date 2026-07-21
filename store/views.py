@@ -8,7 +8,8 @@ from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import CheckoutForm, DemoRequestForm, MedicineForm, PurchaseStockForm, SupplierForm
+from django.contrib.auth import get_user_model
+from .forms import CheckoutForm, DemoRequestForm, MedicineForm, PurchaseStockForm, SupplierForm, CashierForm
 from .models import DailyClosingReport, DailySession, Medicine, Purchase, PurchaseItem, Sale, SaleItem, Supplier
 
 
@@ -583,3 +584,65 @@ def reopen_day(request, report_id):
 
     messages.success(request, f'Session {session.business_date} successfully reopened.')
     return redirect('today_transactions')
+
+
+@login_required
+def cashiers(request):
+    if not request.user.is_superuser:
+        messages.error(request, 'You are not authorized to manage cashiers.')
+        return redirect('dashboard')
+
+    User = get_user_model()
+    # List all users who are not superusers
+    cashier_list = User.objects.filter(is_superuser=False).order_by('username')
+    return render(request, 'store/cashiers.html', {'cashiers': cashier_list})
+
+
+@login_required
+def cashier_add(request):
+    if not request.user.is_superuser:
+        messages.error(request, 'You are not authorized to manage cashiers.')
+        return redirect('dashboard')
+
+    form = CashierForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Cashier added successfully.')
+        return redirect('cashiers')
+
+    return render(request, 'store/cashier_form.html', {'form': form, 'action': 'Add'})
+
+
+@login_required
+def cashier_edit(request, user_id):
+    if not request.user.is_superuser:
+        messages.error(request, 'You are not authorized to manage cashiers.')
+        return redirect('dashboard')
+
+    User = get_user_model()
+    cashier = get_object_or_404(User, pk=user_id, is_superuser=False)
+    form = CashierForm(request.POST or None, instance=cashier)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Cashier updated successfully.')
+        return redirect('cashiers')
+
+    return render(request, 'store/cashier_form.html', {'form': form, 'action': 'Edit', 'cashier': cashier})
+
+
+@login_required
+def cashier_toggle(request, user_id):
+    if not request.user.is_superuser:
+        messages.error(request, 'You are not authorized to manage cashiers.')
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        User = get_user_model()
+        cashier = get_object_or_404(User, pk=user_id, is_superuser=False)
+        cashier.is_active = not cashier.is_active
+        cashier.save()
+        status_str = 'activated' if cashier.is_active else 'deactivated'
+        messages.success(request, f'Cashier {cashier.username} has been {status_str}.')
+    
+    return redirect('cashiers')
+

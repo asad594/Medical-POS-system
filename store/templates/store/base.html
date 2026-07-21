@@ -40,6 +40,12 @@
                 <i data-lucide="users"></i>
                 <span>Suppliers</span>
             </a>
+            {% if request.user.is_superuser %}
+            <a href="{% url 'cashiers' %}">
+                <i data-lucide="shield-check"></i>
+                <span>Cashiers</span>
+            </a>
+            {% endif %}
             <a href="{% url 'alerts' %}">
                 <i data-lucide="bell"></i>
                 <span>Alerts</span>

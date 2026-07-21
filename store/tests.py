@@ -275,3 +275,117 @@ class ClearTransactionsCommandTests(TestCase):
         self.medicine.refresh_from_db()
         self.assertIsNone(self.medicine.supplier)
 
+
+class CashierManagementTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.superuser = User.objects.create_superuser(username='admin_user', password='admin-password')
+        self.staff_user = User.objects.create_user(username='staff_user', password='staff-password', is_staff=True)
+        self.cashier = User.objects.create_user(username='cashier_one', password='cashier-password', is_staff=True)
+
+    def test_superuser_can_manage_cashiers(self):
+        self.client.login(username='admin_user', password='admin-password')
+
+        # 1. View Cashier List
+        response = self.client.get(reverse('cashiers'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'cashier_one')
+        self.assertNotIn(self.superuser, response.context['cashiers'])  # Superusers excluded from table
+
+
+        # 2. Add New Cashier
+        response = self.client.post(
+            reverse('cashier_add'),
+            {
+                'username': 'cashier_two',
+                'first_name': 'First',
+                'last_name': 'Last',
+                'email': 'cashier2@example.com',
+                'password': 'newpassword123',
+                'confirm_password': 'newpassword123',
+                'is_active': True
+            },
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Cashier added successfully.')
+        User = get_user_model()
+        self.assertTrue(User.objects.filter(username='cashier_two').exists())
+        cashier2 = User.objects.get(username='cashier_two')
+        self.assertTrue(cashier2.is_staff)
+
+        # 3. Edit Cashier
+        response = self.client.post(
+            reverse('cashier_edit', args=[cashier2.id]),
+            {
+                'username': 'cashier_two_updated',
+                'first_name': 'Updated',
+                'last_name': 'Name',
+                'email': 'cashier2_updated@example.com',
+                'password': '',  # Blank to keep password
+                'confirm_password': '',
+                'is_active': True
+            },
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Cashier updated successfully.')
+        cashier2.refresh_from_db()
+        self.assertEqual(cashier2.username, 'cashier_two_updated')
+        self.assertEqual(cashier2.first_name, 'Updated')
+
+        # 4. Toggle Cashier active status (Deactivate)
+        response = self.client.post(reverse('cashier_toggle', args=[cashier2.id]), follow=True)
+        self.assertEqual(response.status_code, 200)
+        cashier2.refresh_from_db()
+        self.assertFalse(cashier2.is_active)
+        self.assertContains(response, 'deactivated')
+
+        # 5. Toggle Cashier active status (Activate)
+        response = self.client.post(reverse('cashier_toggle', args=[cashier2.id]), follow=True)
+        self.assertEqual(response.status_code, 200)
+        cashier2.refresh_from_db()
+        self.assertTrue(cashier2.is_active)
+        self.assertContains(response, 'activated')
+
+    def test_non_superuser_cannot_manage_cashiers(self):
+        self.client.login(username='staff_user', password='staff-password')
+
+        # Try to view Cashier List
+        response = self.client.get(reverse('cashiers'), follow=True)
+        self.assertRedirects(response, reverse('dashboard'))
+        self.assertContains(response, 'You are not authorized to manage cashiers.')
+
+        # Try to add Cashier
+        response = self.client.post(
+            reverse('cashier_add'),
+            {
+                'username': 'cashier_three',
+                'password': 'password123',
+                'confirm_password': 'password123'
+            },
+            follow=True
+        )
+        self.assertRedirects(response, reverse('dashboard'))
+        User = get_user_model()
+        self.assertFalse(User.objects.filter(username='cashier_three').exists())
+
+        # Try to edit Cashier
+        response = self.client.post(
+            reverse('cashier_edit', args=[self.cashier.id]),
+            {
+                'username': 'cashier_one_hacked'
+            },
+            follow=True
+        )
+        self.assertRedirects(response, reverse('dashboard'))
+        self.cashier.refresh_from_db()
+        self.assertEqual(self.cashier.username, 'cashier_one')
+
+        # Try to toggle Cashier status
+        response = self.client.post(reverse('cashier_toggle', args=[self.cashier.id]), follow=True)
+        self.assertRedirects(response, reverse('dashboard'))
+        self.cashier.refresh_from_db()
+        self.assertTrue(self.cashier.is_active)
+
+

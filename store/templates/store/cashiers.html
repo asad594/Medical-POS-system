@@ -1,0 +1,81 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Manage Cashiers - MediPOS{% endblock %}
+{% block breadcrumb %}Cashiers{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">User Management</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">Manage Cashiers</h1>
+    </div>
+    <a class="primary-action small" href="{% url 'cashier_add' %}" style="display: inline-flex; align-items: center; gap: 4px;">
+        <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> Add Cashier
+    </a>
+</section>
+
+<section class="panel">
+    <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="users" style="color: var(--primary);"></i>
+            <h2>Registered Cashier Accounts</h2>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Email Address</th>
+                    <th>Date Joined</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cashier in cashiers %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--ink);">{{ cashier.username }}</td>
+                        <td>{{ cashier.get_full_name|default:'-' }}</td>
+                        <td>{{ cashier.email|default:'-' }}</td>
+                        <td>{{ cashier.date_joined|date:"M d, Y" }}</td>
+                        <td>
+                            {% if cashier.is_active %}
+                                <span class="status-good" style="gap: 4px; display: inline-flex; align-items: center; padding: 2px 8px; font-size: 0.8rem;">
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="status-bad" style="gap: 4px; display: inline-flex; align-items: center; padding: 2px 8px; font-size: 0.8rem; background-color: var(--red-light); color: var(--red);">
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <a class="secondary-action small" href="{% url 'cashier_edit' cashier.id %}" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px;">
+                                    <i data-lucide="edit" style="width: 12px; height: 12px;"></i> Edit
+                                </a>
+                                <form method="post" action="{% url 'cashier_toggle' cashier.id %}" style="display: inline-block;">
+                                    {% csrf_token %}
+                                    {% if cashier.is_active %}
+                                        <button class="secondary-action small" type="submit" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px; color: #dc2626; border-color: #fca5a5;">
+                                            <i data-lucide="user-x" style="width: 12px; height: 12px;"></i> Deactivate
+                                        </button>
+                                    {% else %}
+                                        <button class="secondary-action small" type="submit" style="display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px; color: #16a34a; border-color: #86efac;">
+                                            <i data-lucide="user-check" style="width: 12px; height: 12px;"></i> Activate
+                                        </button>
+                                    {% endif %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" style="text-align: center; color: var(--muted);">No cashier accounts found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

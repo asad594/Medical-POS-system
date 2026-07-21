@@ -1,0 +1,89 @@
+{% extends 'store/base.html' %}
+
+{% block title %}{{ action }} Cashier - MediPOS{% endblock %}
+{% block breadcrumb %}{{ action }} Cashier{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">User Management</p>
+        <h1 style="font-size: 2rem; font-weight: 800;">{{ action }} Cashier</h1>
+    </div>
+    <a class="secondary-action small" href="{% url 'cashiers' %}">
+        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Cashiers
+    </a>
+</section>
+
+<section class="panel" style="max-width: 600px; margin: 0 auto; padding: 32px;">
+    <div class="panel-head">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="user-plus" style="color: var(--primary);"></i>
+            <h2>Account Credentials & Info</h2>
+        </div>
+    </div>
+    
+    <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
+        {% csrf_token %}
+        <div>
+            <label>Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <span class="error-text" style="color: var(--red); font-size: 0.85rem; display: block; margin-top: 4px;">{{ form.username.errors.as_text }}</span>
+            {% endif %}
+        </div>
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div>
+                <label>First Name</label>
+                {{ form.first_name }}
+            </div>
+            <div>
+                <label>Last Name</label>
+                {{ form.last_name }}
+            </div>
+        </div>
+        <div>
+            <label>Email Address</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+                <span class="error-text" style="color: var(--red); font-size: 0.85rem; display: block; margin-top: 4px;">{{ form.email.errors.as_text }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 12px;">
+            <div>
+                <label>Password</label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <span class="error-text" style="color: var(--red); font-size: 0.85rem; display: block; margin-top: 4px;">{{ form.password.errors.as_text }}</span>
+                {% endif %}
+                {% if action == 'Edit' %}
+                    <span style="color: var(--muted); font-size: 0.75rem; display: block; margin-top: 4px;">Leave blank to keep password.</span>
+                {% endif %}
+            </div>
+            <div>
+                <label>Confirm Password</label>
+                {{ form.confirm_password }}
+                {% if form.confirm_password.errors %}
+                    <span class="error-text" style="color: var(--red); font-size: 0.85rem; display: block; margin-top: 4px;">{{ form.confirm_password.errors.as_text }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+            {{ form.is_active }}
+            <label style="margin: 0; font-weight: 500;">Active cashier account (can log in)</label>
+        </div>
+        
+        {% if form.non_field_errors %}
+            <div class="message error">
+                <i data-lucide="alert-triangle"></i>
+                <span>{{ form.non_field_errors.as_text }}</span>
+            </div>
+        {% endif %}
+        
+        <button class="primary-action" type="submit" style="font-weight: 600; width: 100%; margin-top: 8px;">
+            <i data-lucide="check" style="width: 16px; height: 16px;"></i> {% if action == 'Edit' %}Update{% else %}Create{% endif %} Cashier Account
+        </button>
+    </form>
+</section>
+{% endblock %}

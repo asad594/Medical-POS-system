@@ -65,3 +65,48 @@ class CheckoutForm(forms.Form):
 
         super().__init__(*args, **kwargs)
         self.fields['payment_method'].choices = Sale.PAYMENT_CHOICES
+
+
+class CashierForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-input'}), required=False, help_text="Leave blank to keep current password when editing.")
+    confirm_password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-input'}), required=False)
+
+    class Meta:
+        from django.contrib.auth import get_user_model
+        model = get_user_model()
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_active']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-input'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'email': forms.EmailInput(attrs={'class': 'form-input'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-checkbox'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields['password'].required = True
+            self.fields['confirm_password'].required = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+
+        if password or confirm_password:
+            if password != confirm_password:
+                self.add_error('confirm_password', "Passwords do not match.")
+        return cleaned_data
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        password = self.cleaned_data.get("password")
+        if password:
+            user.set_password(password)
+        # Cashiers must be staff so they can log into the POS desktop app (which uses login_required)
+        user.is_staff = True
+        if commit:
+            user.save()
+        return user
+
