@@ -160,6 +160,14 @@ def pos(request):
     query = request.GET.get('q', '').strip()
     category = request.GET.get('category', 'all').strip()
 
+    category_counts = {
+        'all': Medicine.objects.filter(is_active=True).count(),
+        'medicines': Medicine.objects.filter(is_active=True, category__in=['tablet', 'capsule', 'injection']).count(),
+        'cream': Medicine.objects.filter(is_active=True, category='cream').count(),
+        'syrup': Medicine.objects.filter(is_active=True, category='syrup').count(),
+        'other': Medicine.objects.filter(is_active=True, category__in=['other', 'drops']).count(),
+    }
+
     medicines = Medicine.objects.filter(is_active=True).select_related('supplier')
     if category and category != 'all':
         if category in ['medicines', 'tablet']:
@@ -183,6 +191,7 @@ def pos(request):
     context = {
         'query': query,
         'category': category,
+        'category_counts': category_counts,
         'medicines': medicines,
         'cart_lines': lines,
         'subtotal': subtotal,
@@ -283,6 +292,14 @@ def medicines(request):
             | Q(manufacturer__icontains=query)
         )
 
+    category_counts = {
+        'all': Medicine.objects.count(),
+        'medicines': Medicine.objects.filter(category__in=['tablet', 'capsule', 'injection']).count(),
+        'cream': Medicine.objects.filter(category='cream').count(),
+        'syrup': Medicine.objects.filter(category='syrup').count(),
+        'other': Medicine.objects.filter(category__in=['other', 'drops']).count(),
+    }
+
     return render(
         request,
         'store/medicines.html',
@@ -291,6 +308,7 @@ def medicines(request):
             'medicines': medicine_list[:150],
             'query': query,
             'category': category,
+            'category_counts': category_counts,
         },
     )
 

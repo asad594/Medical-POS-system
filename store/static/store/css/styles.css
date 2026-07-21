@@ -1163,3 +1163,124 @@ tr:hover td {
         padding-top: 32px;
     }
 }
+
+/* ==========================================================================
+   Modern & Interactive Category Filter Bar
+   ========================================================================== */
+.category-tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 8px 4px 14px 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.category-tab-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.category-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    user-select: none;
+    position: relative;
+}
+
+.category-pill i {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.25s ease, color 0.25s ease;
+    flex-shrink: 0;
+}
+
+.category-pill:hover {
+    color: var(--ink);
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.category-pill:hover i {
+    transform: scale(1.15);
+}
+
+.category-pill:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* Category Active (Selected) States with Gradient Accents */
+.category-pill.active {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 4px 14px -1px rgba(37, 99, 235, 0.45) !important;
+    font-weight: 700;
+}
+
+.category-pill.active i {
+    color: #ffffff !important;
+}
+
+/* Category Specific Color Hints when Active */
+.category-pill.cat-medicines.active {
+    background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 4px 14px -1px rgba(14, 165, 233, 0.45) !important;
+}
+
+.category-pill.cat-creams.active {
+    background: linear-gradient(135deg, #db2777, #be185d) !important;
+    border-color: #f472b6 !important;
+    box-shadow: 0 4px 14px -1px rgba(236, 72, 153, 0.45) !important;
+}
+
+.category-pill.cat-syrups.active {
+    background: linear-gradient(135deg, #d97706, #b45309) !important;
+    border-color: #fbbf24 !important;
+    box-shadow: 0 4px 14px -1px rgba(245, 158, 11, 0.45) !important;
+}
+
+.category-pill.cat-others.active {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    border-color: #34d399 !important;
+    box-shadow: 0 4px 14px -1px rgba(16, 185, 129, 0.45) !important;
+}
+
+/* Category Count Badges inside Pills */
+.category-badge-count {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--muted);
+    transition: all 0.2s ease;
+}
+
+.category-pill:hover .category-badge-count {
+    color: var(--ink);
+    background: rgba(37, 99, 235, 0.15);
+}
+
+.category-pill.active .category-badge-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+

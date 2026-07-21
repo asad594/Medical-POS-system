@@ -79,21 +79,31 @@
             </div>
 
             <!-- Category Filter Tabs -->
-            <div class="category-tab-bar" style="display: flex; gap: 8px; overflow-x: auto; padding: 6px 0 2px 0; margin-top: 4px; scrollbar-width: none;">
-                <a href="{% url 'pos' %}?q={{ query }}&category=all" class="category-pill {% if category == 'all' or not category %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
-                    <i data-lucide="layout-grid" style="width: 13px; height: 13px;"></i> All Items
+            <div class="category-tab-bar">
+                <a href="{% url 'pos' %}?q={{ query }}&category=all" class="category-pill {% if category == 'all' or not category %}active{% endif %}">
+                    <i data-lucide="layout-grid"></i>
+                    <span>All Items</span>
+                    <span class="category-badge-count">{{ category_counts.all|default:'0' }}</span>
                 </a>
-                <a href="{% url 'pos' %}?q={{ query }}&category=medicines" class="category-pill {% if category == 'medicines' or category == 'tablet' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
-                    <i data-lucide="pill" style="width: 13px; height: 13px;"></i> Medicines
+                <a href="{% url 'pos' %}?q={{ query }}&category=medicines" class="category-pill cat-medicines {% if category == 'medicines' or category == 'tablet' %}active{% endif %}">
+                    <i data-lucide="pill"></i>
+                    <span>Medicines</span>
+                    <span class="category-badge-count">{{ category_counts.medicines|default:'0' }}</span>
                 </a>
-                <a href="{% url 'pos' %}?q={{ query }}&category=cream" class="category-pill {% if category == 'cream' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
-                    <i data-lucide="sparkles" style="width: 13px; height: 13px;"></i> Creams
+                <a href="{% url 'pos' %}?q={{ query }}&category=cream" class="category-pill cat-creams {% if category == 'cream' %}active{% endif %}">
+                    <i data-lucide="sparkles"></i>
+                    <span>Creams</span>
+                    <span class="category-badge-count">{{ category_counts.cream|default:'0' }}</span>
                 </a>
-                <a href="{% url 'pos' %}?q={{ query }}&category=syrup" class="category-pill {% if category == 'syrup' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
-                    <i data-lucide="beaker" style="width: 13px; height: 13px;"></i> Syrups
+                <a href="{% url 'pos' %}?q={{ query }}&category=syrup" class="category-pill cat-syrups {% if category == 'syrup' %}active{% endif %}">
+                    <i data-lucide="beaker"></i>
+                    <span>Syrups</span>
+                    <span class="category-badge-count">{{ category_counts.syrup|default:'0' }}</span>
                 </a>
-                <a href="{% url 'pos' %}?q={{ query }}&category=other" class="category-pill {% if category == 'other' or category == 'drops' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; background: var(--surface); color: var(--muted); border: 1px solid var(--border); text-decoration: none; white-space: nowrap;">
-                    <i data-lucide="package" style="width: 13px; height: 13px;"></i> Others
+                <a href="{% url 'pos' %}?q={{ query }}&category=other" class="category-pill cat-others {% if category == 'other' or category == 'drops' %}active{% endif %}">
+                    <i data-lucide="package"></i>
+                    <span>Others</span>
+                    <span class="category-badge-count">{{ category_counts.other|default:'0' }}</span>
                 </a>
             </div>
         </form>
